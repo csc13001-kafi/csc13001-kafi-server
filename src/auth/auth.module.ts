@@ -16,7 +16,7 @@ import { AccessControlService } from '../ac/ac.service';
         PassportModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
+            useFactory: (configService: ConfigService) => ({
                 secret: configService.get('AT_SECRET'),
                 signOptions: {
                     expiresIn: configService.get('JWT_EXPIRATION_TIME'),

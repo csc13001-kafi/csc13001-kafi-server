@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TokensDto } from './dtos/tokens.dto';
-import { UserRepository } from '../users/users.repository';
+import { UsersRepository } from '../users/users.repository';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserLoginDto } from './dtos/user-signin.dto';
@@ -18,7 +18,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly usersRepository: UserRepository,
+        private readonly usersRepository: UsersRepository,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
         private readonly mailerService: MailerService,
@@ -58,6 +58,7 @@ export class AuthService {
 
             const payloadRefreshToken = {
                 id: user.id,
+                username: user.username,
                 email: user.email,
                 role: user.role,
             };
@@ -78,7 +79,7 @@ export class AuthService {
 
             return { accessToken, refreshToken };
         } catch (error: any) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -87,15 +88,15 @@ export class AuthService {
             const newUser = await this.usersRepository.create(user, Role.GUEST);
             return newUser;
         } catch (error: any) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
-    public async signOut(user: any): Promise<void> {
+    public async signOut(user: UserLoginDto): Promise<void> {
         try {
             await this.usersRepository.updateRefreshToken(user.id, 'null');
         } catch (error: any) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -107,7 +108,11 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid refresh token');
             }
 
-            const payload = this.jwtService.verify(refreshToken, {
+            const payload = this.jwtService.verify<{
+                id: string;
+                username: string;
+                role: Role;
+            }>(refreshToken, {
                 secret: this.configService.get('RT_SECRET'),
             });
 
@@ -126,7 +131,8 @@ export class AuthService {
         } catch (error: any) {
             await this.usersRepository.deleteByRefreshToken(refreshToken);
             throw new UnauthorizedException(
-                error.message || 'Refresh token expired. Please log in again',
+                (error as Error).message ||
+                    'Refresh token expired. Please log in again',
             );
         }
     }
@@ -149,9 +155,7 @@ export class AuthService {
 
             return;
         } catch (error) {
-            throw new InternalServerErrorException(error.message, {
-                cause: error.message,
-            });
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -169,9 +173,7 @@ export class AuthService {
 
             return;
         } catch (error) {
-            throw new InternalServerErrorException(error.message, {
-                cause: error.message,
-            });
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -182,7 +184,7 @@ export class AuthService {
         confirmPassword: string,
     ): Promise<void> {
         try {
-            const user = await this.usersService.findByOtpOnly(email, otp);
+            const user = await this.usersRepository.findByOtpOnly(email, otp);
 
             if (!user) throw new BadRequestException('Invalid OTP');
 
@@ -195,13 +197,12 @@ export class AuthService {
                 throw new BadRequestException('OTP expired');
             }
 
-            const hashedPassword = await this.hashPassword(newPassword);
-            await this.usersService.updatePassword(email, hashedPassword);
+            const hashedPassword =
+                await this.usersRepository.hashPassword(newPassword);
+            await this.usersRepository.updatePassword(email, hashedPassword);
             return;
         } catch (error) {
-            throw new InternalServerErrorException(error.message, {
-                cause: error.message,
-            });
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 }

@@ -10,7 +10,7 @@ export class AppService {
             return {
                 status: 'ok',
             };
-        } catch (error) {
+        } catch (error: any) {
             return {
                 statusCode: 500,
                 error: error.message,

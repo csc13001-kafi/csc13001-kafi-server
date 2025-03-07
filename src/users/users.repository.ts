@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './entities/user.model';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
 @Injectable()
-export class UserRepository {
+export class UsersRepository {
     constructor(
         @InjectModel(User) private readonly userModel: typeof User,
         private readonly configService: ConfigService,
@@ -16,14 +16,14 @@ export class UserRepository {
     async validatePassword(password: string, user: User): Promise<boolean> {
         try {
             return await bcrypt.compare(password, user.password);
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
     async hashPassword(password: string): Promise<string> {
         try {
-            const salt: number = await bcrypt.genSalt(
+            const salt: string = await bcrypt.genSalt(
                 parseInt(this.configService.get('SALT'), 10),
             );
 
@@ -31,7 +31,7 @@ export class UserRepository {
 
             return hashedPassword;
         } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -59,8 +59,8 @@ export class UserRepository {
     async findAll(): Promise<User[]> {
         try {
             return await this.userModel.findAll<User>();
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -69,9 +69,9 @@ export class UserRepository {
             const project = await this.userModel.findOne<User>({
                 where: { email },
             });
-            return project.dataValues;
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            return project.dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -80,9 +80,9 @@ export class UserRepository {
             const project = await this.userModel.findOne<User>({
                 where: { id },
             });
-            return project.dataValues;
+            return project.dataValues as User;
         } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -100,7 +100,18 @@ export class UserRepository {
                 );
             }
         } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async updatePassword(email: string, password: string): Promise<void> {
+        try {
+            await this.userModel.update(
+                { password: password, otp: null, otpExpiry: null },
+                { where: { email: email } },
+            );
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -114,8 +125,8 @@ export class UserRepository {
                 { otp: otp, otpExpiry: otpExpiry },
                 { where: { email: email } },
             );
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -124,9 +135,9 @@ export class UserRepository {
             const project = await this.userModel.findOne<User>({
                 where: { refreshToken },
             });
-            return project.dataValues;
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            return project.dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -134,7 +145,7 @@ export class UserRepository {
         try {
             await this.userModel.destroy({ where: { refreshToken } });
         } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -143,9 +154,21 @@ export class UserRepository {
             const project = await this.userModel.findOne<User>({
                 where: { email, otp },
             });
-            return project.dataValues;
+            return project.dataValues as User;
         } catch (error) {
-            throw new InternalServerErrorException(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
+    }
+
+    async findByOtpOnly(email: string, otp: string): Promise<User> {
+        const project = await this.userModel.findOne<User>({
+            where: { email, otp },
+        });
+        if (!project) {
+            throw new InternalServerErrorException(
+                `User ${email} with the OTP not found`,
+            );
+        }
+        return project.dataValues as User;
     }
 }
