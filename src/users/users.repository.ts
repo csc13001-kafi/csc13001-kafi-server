@@ -58,7 +58,8 @@ export class UsersRepository {
 
     async findAll(): Promise<User[]> {
         try {
-            return await this.userModel.findAll<User>();
+            const users = await this.userModel.findAll<User>();
+            return users.map((user) => user.dataValues as User);
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
