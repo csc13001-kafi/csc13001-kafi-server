@@ -23,4 +23,8 @@ export class ProfileDto {
     @ApiProperty()
     @IsString()
     id: string;
+
+    @ApiProperty()
+    @IsString()
+    role: string;
 }

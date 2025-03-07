@@ -30,6 +30,7 @@ export class AuthService {
             return null;
         }
 
+        console.log(user);
         const isValidPassword: boolean =
             await this.usersRepository.validatePassword(password, user);
 
@@ -71,6 +72,7 @@ export class AuthService {
                 },
             );
 
+            console.log(user);
             await this.usersRepository.updateRefreshToken(
                 user.id,
                 refreshToken,

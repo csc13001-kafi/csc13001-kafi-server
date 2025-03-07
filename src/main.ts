@@ -10,9 +10,8 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { SpelunkerModule } from 'nestjs-spelunker';
-import * as fs from 'fs';
+import fs from 'fs';
 import { INestApplication } from '@nestjs/common';
-import { UsersService } from './users/users.service';
 
 const setMiddleware = (app: NestExpressApplication) => {
     app.use(helmet());
@@ -79,8 +78,8 @@ async function bootstrap() {
     }
 
     const config = new DocumentBuilder()
-        .setTitle('tiawai')
-        .setDescription('The tiawai API description')
+        .setTitle('kafi-server')
+        .setDescription('The kafi server POS system API description')
         .setVersion('1.0')
         .addBearerAuth(
             {

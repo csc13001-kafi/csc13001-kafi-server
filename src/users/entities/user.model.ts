@@ -3,12 +3,12 @@ import {
     Model,
     Table,
     Unique,
-    DataType,
     CreatedAt,
     UpdatedAt,
     IsEmail,
 } from 'sequelize-typescript';
 import { Role } from '../../auth/enums/roles.enum';
+import { DataTypes } from 'sequelize';
 
 @Table({
     tableName: 'accounts',
@@ -17,67 +17,67 @@ import { Role } from '../../auth/enums/roles.enum';
 export class User extends Model {
     @Column({
         primaryKey: true,
-        allowNull: false,
         unique: true,
-        type: DataType.UUID,
-        defaultValue: DataType.UUIDV4,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
     })
     declare id: string;
 
     @Column({
-        type: DataType.STRING,
+        type: DataTypes.STRING,
+        allowNull: false,
     })
     username: string;
 
     @Unique
     @IsEmail
     @Column({
-        type: DataType.STRING,
+        type: DataTypes.STRING,
         unique: true,
+        allowNull: false,
     })
     email: string;
 
     @Column({
-        type: DataType.STRING,
+        type: DataTypes.STRING,
+        allowNull: false,
     })
     password: string;
 
     @Column({
-        type: DataType.STRING(500),
+        type: DataTypes.STRING(500),
         field: 'refresh_token',
     })
     refreshToken: string;
 
     @CreatedAt
     @Column({
-        field: 'created_at',
-        type: DataType.DATE,
-        defaultValue: DataType.NOW,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
     })
     declare createdAt: Date;
 
     @UpdatedAt
     @Column({
-        field: 'updated_at',
-        type: DataType.DATE,
+        type: DataTypes.DATE,
         allowNull: true,
     })
     declare updatedAt: Date;
 
     @Column({
-        type: DataType.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
     })
     otp: string;
 
     @Column({
-        type: DataType.DATE,
+        type: DataTypes.DATE,
         allowNull: true,
     })
     otpExpiry: Date;
 
     @Column({
-        type: DataType.STRING,
+        type: DataTypes.STRING,
     })
     role: Role;
 }
