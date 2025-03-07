@@ -1,9 +1,15 @@
 name: lint
 on:
     push:
-        branches: ['main', 'dev']
+        branches:
+            - main
+            - dev
+            - 'KAFI-[0-9]*/KAFI-[0-9]*'
     pull_request:
-        branches: ['main', 'dev']
+        branches:
+            - main
+            - dev
+            - 'KAFI-[0-9]*/KAFI-[0-9]*'
         paths-ignore:
             - 'README.md'
             - 'LICENSE'
