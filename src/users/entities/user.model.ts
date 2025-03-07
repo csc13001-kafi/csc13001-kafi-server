@@ -2,10 +2,8 @@ import {
     Column,
     Model,
     Table,
-    Unique,
     CreatedAt,
     UpdatedAt,
-    IsEmail,
 } from 'sequelize-typescript';
 import { Role } from '../../auth/enums/roles.enum';
 import { DataTypes } from 'sequelize';
@@ -29,14 +27,19 @@ export class User extends Model {
     })
     username: string;
 
-    @Unique
-    @IsEmail
     @Column({
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
     })
     email: string;
+
+    @Column({
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+    })
+    phone: string;
 
     @Column({
         type: DataTypes.STRING,

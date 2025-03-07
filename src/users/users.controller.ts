@@ -1,7 +1,9 @@
 import {
+    Body,
     Controller,
     Get,
     HttpCode,
+    Post,
     Request,
     Res,
     UseGuards,
@@ -14,12 +16,13 @@ import { Role } from '../auth/enums/roles.enum';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ProfileDto } from '../auth/dtos/cred.dto';
+import { CreateCustomerDto } from './dtos/customer.dto';
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
-    @ApiOperation({ summary: 'Get all profiles [MANAGER]' })
+    @ApiOperation({ summary: 'Get all profiles: EMPLOYEE, CUSTOMER [MANAGER]' })
     @ApiBearerAuth('access-token')
     @Get()
     @ApiResponse({
@@ -41,7 +44,9 @@ export class UsersController {
         res.send(foundUsers);
     }
 
-    @ApiOperation({ summary: 'Get profile with credentials [USER]' })
+    @ApiOperation({
+        summary: 'Get profile with credentials [CUSTOMER/EMPLOYEE/MANAGER]',
+    })
     @ApiBearerAuth('access-token')
     @Get('user')
     @ApiResponse({
@@ -58,5 +63,30 @@ export class UsersController {
             role: string;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
+    }
+
+    @ApiOperation({
+        summary: 'Create customer account for membership loyalty [EMPLOYEE]',
+    })
+    @ApiBearerAuth('access-token')
+    @Post('customer')
+    @ApiResponse({
+        status: 201,
+        description: 'Create customer account successfully',
+        type: ProfileDto,
+    })
+    @UseGuards(ATAuthGuard)
+    @Roles(Role.EMPLOYEE)
+    @HttpCode(201)
+    async createCustomerAccount(
+        @Body() createCustomerDto: CreateCustomerDto,
+        @Res() res: Response,
+    ) {
+        const newCustomer = await this.usersService.createCustomerAccount(
+            createCustomerDto.email,
+            createCustomerDto.username,
+            createCustomerDto.phone,
+        );
+        res.status(201).send(newCustomer);
     }
 }

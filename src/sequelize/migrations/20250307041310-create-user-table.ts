@@ -18,6 +18,11 @@ export = {
                 allowNull: false,
                 unique: true,
             },
+            phone: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
             createdAt: {
                 type: DataTypes.DATE,
                 allowNull: false,

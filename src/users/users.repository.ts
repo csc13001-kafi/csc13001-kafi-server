@@ -36,24 +36,31 @@ export class UsersRepository {
     }
 
     async create(CreateDto: UserSignUpDto, role: string): Promise<User> {
-        const { username, email, password } = CreateDto;
-        const hashedPassword = await this.hashPassword(password);
+        try {
+            const { username, email, password, phone } = CreateDto;
+            const hashedPassword = await this.hashPassword(password);
 
-        const user = await this.userModel.create({
-            id: uuidv4(),
-            username: username,
-            email: email,
-            password: hashedPassword,
-            otp: null,
-            otpExpiry: null,
-            role: role,
-        });
-        if (!user) {
-            throw new InternalServerErrorException(
-                'This email or username is already in use',
-            );
+            const user = await this.userModel.create({
+                id: uuidv4(),
+                username: username,
+                email: email,
+                password: hashedPassword,
+                phone: phone,
+                otp: null,
+                otpExpiry: null,
+                role: role,
+            });
+
+            if (!user) {
+                throw new InternalServerErrorException(
+                    'This email or username is already in use',
+                );
+            }
+            return user;
+        } catch (error: any) {
+            console.log(error.message);
+            throw new InternalServerErrorException((error as Error).message);
         }
-        return user;
     }
 
     async findAll(): Promise<User[]> {

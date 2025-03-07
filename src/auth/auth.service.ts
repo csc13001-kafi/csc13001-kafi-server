@@ -30,7 +30,6 @@ export class AuthService {
             return null;
         }
 
-        console.log(user);
         const isValidPassword: boolean =
             await this.usersRepository.validatePassword(password, user);
 
@@ -72,7 +71,6 @@ export class AuthService {
                 },
             );
 
-            console.log(user);
             await this.usersRepository.updateRefreshToken(
                 user.id,
                 refreshToken,
@@ -87,7 +85,10 @@ export class AuthService {
 
     public async signUp(user: UserSignUpDto): Promise<User> {
         try {
-            const newUser = await this.usersRepository.create(user, Role.GUEST);
+            const newUser = await this.usersRepository.create(
+                user,
+                Role.CUSTOMER,
+            );
             return newUser;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);

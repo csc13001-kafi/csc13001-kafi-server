@@ -6,6 +6,11 @@ import bcrypt from 'bcrypt';
 
 dotenv.config();
 
+function generateRandomPhoneNumber(countryCode = '+84') {
+    const randomNumber = Math.floor(100000000 + Math.random() * 900000000);
+    return `${countryCode}${randomNumber}`;
+}
+
 export = {
     async up(queryInterface: QueryInterface) {
         const saltRounds = process.env.SALT_ROUNDS
@@ -15,7 +20,6 @@ export = {
             process.env.MANAGER_PASSWORD,
             saltRounds,
         );
-
         const users = [
             {
                 id: crypto.randomUUID(),
@@ -23,6 +27,7 @@ export = {
                 email: process.env.MANAGER_EMAIL,
                 password: hashedPassword,
                 role: Role.MANAGER,
+                phone: generateRandomPhoneNumber(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
             },
