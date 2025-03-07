@@ -29,7 +29,7 @@ const setMiddleware = (app: NestExpressApplication) => {
     app.use(cookieParser());
 };
 
-async function generateDependencyGraph(app: INestApplication) {
+function generateDependencyGraph(app: INestApplication) {
     const tree = SpelunkerModule.explore(app);
     const root = SpelunkerModule.graph(tree);
     const edges = SpelunkerModule.findGraphEdges(root);
@@ -65,7 +65,7 @@ async function bootstrap() {
 
     const configService = app.get(ConfigService);
     const port = configService.get('SERVER_PORT');
-    const userService = app.get(UsersService);
+    //const userService = app.get(UsersService);
     //await userService.createDefaultAdmin();
 
     app.use(json());
