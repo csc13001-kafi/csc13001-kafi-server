@@ -40,6 +40,7 @@ export class UsersController {
             username: string;
             id: string;
             role: string;
+            pts: number;
         }[] = await this.usersService.getAllProfiles();
         res.send(foundUsers);
     }
@@ -61,6 +62,7 @@ export class UsersController {
             username: string;
             id: string;
             role: string;
+            pts: number;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
     }

@@ -52,6 +52,11 @@ export = {
             role: {
                 type: DataTypes.STRING,
             },
+            pts: {
+                type: DataTypes.DECIMAL,
+                allowNull: false,
+                defaultValue: 0,
+            },
         });
     },
 

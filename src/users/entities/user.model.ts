@@ -83,4 +83,11 @@ export class User extends Model {
         type: DataTypes.STRING,
     })
     role: Role;
+
+    @Column({
+        type: DataTypes.DECIMAL,
+        allowNull: false,
+        defaultValue: 0,
+    })
+    pts: number;
 }

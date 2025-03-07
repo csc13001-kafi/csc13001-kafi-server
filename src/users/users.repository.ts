@@ -49,6 +49,7 @@ export class UsersRepository {
                 otp: null,
                 otpExpiry: null,
                 role: role,
+                pts: 0,
             });
 
             if (!user) {

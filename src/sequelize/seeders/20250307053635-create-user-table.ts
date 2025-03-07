@@ -30,6 +30,7 @@ export = {
                 phone: generateRandomPhoneNumber(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                pts: 0,
             },
             // Add more user objects as needed
         ];

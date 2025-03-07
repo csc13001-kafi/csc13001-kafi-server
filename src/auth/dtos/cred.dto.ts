@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export class CredDto {
     @ApiProperty()
@@ -27,4 +27,8 @@ export class ProfileDto {
     @ApiProperty()
     @IsString()
     role: string;
+
+    @ApiProperty()
+    @IsNumber()
+    pts: number;
 }

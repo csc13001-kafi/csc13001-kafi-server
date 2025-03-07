@@ -16,7 +16,13 @@ export class UsersService {
     ) {}
 
     async getAllProfiles(): Promise<
-        { email: string; username: string; id: string; role: string }[]
+        {
+            email: string;
+            username: string;
+            id: string;
+            role: string;
+            pts: number;
+        }[]
     > {
         try {
             const users = await this.usersRepository.findAll();
@@ -26,6 +32,7 @@ export class UsersService {
                     username: user.username,
                     id: user.id,
                     role: user.role,
+                    pts: user.pts,
                 };
             });
             return newUsers;
@@ -83,6 +90,7 @@ export class UsersService {
         username: string;
         id: string;
         role: string;
+        pts: number;
     }> {
         try {
             const { id } = profileUser;
@@ -97,6 +105,7 @@ export class UsersService {
                 username: user.username,
                 id: user.id,
                 role: user.role,
+                pts: user.pts,
             };
             return newUser;
         } catch (error) {
