@@ -70,6 +70,19 @@ export class UsersRepository {
             const project = await this.userModel.findOne<User>({
                 where: { email },
             });
+
+            return project.dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async findOneByUsername(username: string): Promise<User> {
+        try {
+            const project = await this.userModel.findOne<User>({
+                where: { username },
+            });
+
             return project.dataValues as User;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
