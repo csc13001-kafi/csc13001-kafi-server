@@ -50,7 +50,7 @@ export class UsersRepository {
         });
         if (!user) {
             throw new InternalServerErrorException(
-                'This email or username is already in use',
+                'Error occurs when creating user',
             );
         }
         return user;

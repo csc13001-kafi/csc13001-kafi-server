@@ -28,12 +28,11 @@ export class AuthService {
         username: string,
         password: string,
     ): Promise<User> {
-        const user = await this.usersRepository.findOneByUsername(username);
+        const user = await this.usersRepository.findOneByEmail(username);
         if (!user) {
             return null;
         }
 
-        console.log(user);
         const isValidPassword: boolean =
             await this.usersRepository.validatePassword(password, user);
 
@@ -48,6 +47,7 @@ export class AuthService {
         try {
             const payloadAccessToken = {
                 id: user.id,
+                email: user.email,
                 username: user.username,
                 role: user.role,
             };
@@ -62,7 +62,6 @@ export class AuthService {
 
             const payloadRefreshToken = {
                 id: user.id,
-                username: user.username,
                 email: user.email,
                 role: user.role,
             };
@@ -75,7 +74,6 @@ export class AuthService {
                 },
             );
 
-            console.log(user);
             await this.usersRepository.updateRefreshToken(
                 user.id,
                 refreshToken,
