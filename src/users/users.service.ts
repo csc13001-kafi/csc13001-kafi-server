@@ -24,11 +24,8 @@ export class UsersService {
                 };
             });
             return newUsers;
-        } catch (error) {
-            throw new InternalServerErrorException(
-                'Error getting all profiles',
-                error.message,
-            );
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 

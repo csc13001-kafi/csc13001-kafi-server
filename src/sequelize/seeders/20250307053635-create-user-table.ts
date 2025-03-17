@@ -1,4 +1,4 @@
-import { QueryInterface } from 'sequelize';
+import { QueryInterface, QueryTypes } from 'sequelize';
 import dotenv from 'dotenv';
 import { Role } from '../../auth/enums/roles.enum';
 import crypto from 'crypto';
@@ -16,21 +16,30 @@ export = {
             saltRounds,
         );
 
-        const users = [
-            {
-                id: crypto.randomUUID(),
-                username: process.env.MANAGER_USERNAME,
-                email: process.env.MANAGER_EMAIL,
-                password: hashedPassword,
-                role: Role.MANAGER,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-            // Add more user objects as needed
-        ];
+        const managerEmail = process.env.MANAGER_EMAIL;
 
-        // Insert the user data into the 'accounts' table
-        await queryInterface.bulkInsert('accounts', users);
+        // Check if the manager already exists
+        const [existingUser] = await queryInterface.sequelize.query(
+            `SELECT id FROM accounts WHERE email = :email LIMIT 1`,
+            {
+                replacements: { email: managerEmail },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        if (!existingUser) {
+            await queryInterface.bulkInsert('accounts', [
+                {
+                    id: crypto.randomUUID(),
+                    username: process.env.MANAGER_USERNAME,
+                    email: managerEmail,
+                    password: hashedPassword,
+                    role: Role.MANAGER,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            ]);
+        }
     },
 
     async down(queryInterface: QueryInterface) {
