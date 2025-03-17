@@ -24,8 +24,11 @@ export class AuthService {
         private readonly mailerService: MailerService,
     ) {}
 
-    public async validateUser(email: string, password: string): Promise<User> {
-        const user = await this.usersRepository.findOneByEmail(email);
+    public async validateUser(
+        username: string,
+        password: string,
+    ): Promise<User> {
+        const user = await this.usersRepository.findOneByUsername(username);
         if (!user) {
             return null;
         }
