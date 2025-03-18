@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import {
+    IsDateString,
+    IsEmail,
+    IsNotEmpty,
+    IsPhoneNumber,
+    IsString,
+} from 'class-validator';
 
 export class UserSignUpDto {
     @IsNotEmpty({ message: 'Username cannot be empty' })
@@ -12,4 +18,16 @@ export class UserSignUpDto {
     @IsNotEmpty({ message: 'Password cannot be empty' })
     @IsString()
     password: string;
+
+    @IsNotEmpty({ message: 'Phone cannot be empty' })
+    @IsPhoneNumber('VN', { message: 'Invalid phone number' })
+    phone: string;
+
+    @IsNotEmpty({ message: 'Address cannot be empty' })
+    @IsString()
+    address: string;
+
+    @IsNotEmpty({ message: 'Birthdate cannot be empty' })
+    @IsDateString()
+    birthdate: string;
 }

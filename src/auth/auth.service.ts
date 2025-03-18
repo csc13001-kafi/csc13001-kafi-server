@@ -28,11 +28,12 @@ export class AuthService {
         username: string,
         password: string,
     ): Promise<User> {
-        const user = await this.usersRepository.findOneByEmail(username);
+        const user = await this.usersRepository.findOneByUsername(username);
         if (!user) {
             return null;
         }
 
+        console.log(user);
         const isValidPassword: boolean =
             await this.usersRepository.validatePassword(password, user);
 
@@ -47,7 +48,6 @@ export class AuthService {
         try {
             const payloadAccessToken = {
                 id: user.id,
-                email: user.email,
                 username: user.username,
                 role: user.role,
             };
@@ -62,6 +62,7 @@ export class AuthService {
 
             const payloadRefreshToken = {
                 id: user.id,
+                username: user.username,
                 email: user.email,
                 role: user.role,
             };
@@ -74,6 +75,7 @@ export class AuthService {
                 },
             );
 
+            console.log(user);
             await this.usersRepository.updateRefreshToken(
                 user.id,
                 refreshToken,
@@ -88,7 +90,7 @@ export class AuthService {
 
     public async signUp(user: UserSignUpDto): Promise<User> {
         try {
-            const newUser = await this.usersRepository.create(user, Role.GUEST);
+            const newUser = await this.usersRepository.createFromClient(user);
             return newUser;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
