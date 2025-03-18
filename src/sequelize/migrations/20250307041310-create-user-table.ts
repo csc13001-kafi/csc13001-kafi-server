@@ -18,18 +18,21 @@ export = {
                 allowNull: false,
                 unique: true,
             },
-            createdAt: {
-                type: DataTypes.DATE,
-                allowNull: false,
-                defaultValue: DataTypes.NOW,
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                allowNull: false,
-                defaultValue: DataTypes.NOW,
-            },
             password: {
                 type: DataTypes.STRING,
+                allowNull: false,
+            },
+            phone: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
+            address: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+            birthdate: {
+                type: DataTypes.DATE,
                 allowNull: false,
             },
             refreshToken: {
@@ -46,6 +49,35 @@ export = {
             },
             role: {
                 type: DataTypes.STRING,
+                allowNull: false,
+            },
+            salary: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            workStart: {
+                type: DataTypes.TIME,
+                allowNull: true,
+            },
+            workEnd: {
+                type: DataTypes.TIME,
+                allowNull: true,
+            },
+            loyaltyPoints: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            createdAt: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: DataTypes.NOW,
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: DataTypes.NOW,
             },
         });
     },
