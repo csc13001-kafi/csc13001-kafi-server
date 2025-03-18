@@ -1,12 +1,4 @@
-import {
-    Column,
-    Model,
-    Table,
-    Unique,
-    CreatedAt,
-    UpdatedAt,
-    IsEmail,
-} from 'sequelize-typescript';
+import { Column, Model, Table } from 'sequelize-typescript';
 import { Role } from '../../auth/enums/roles.enum';
 import { DataTypes } from 'sequelize';
 
@@ -15,6 +7,7 @@ import { DataTypes } from 'sequelize';
     timestamps: true,
 })
 export class User extends Model {
+    // Basic info
     @Column({
         primaryKey: true,
         unique: true,
@@ -29,8 +22,6 @@ export class User extends Model {
     })
     username: string;
 
-    @Unique
-    @IsEmail
     @Column({
         type: DataTypes.STRING,
         unique: true,
@@ -45,19 +36,36 @@ export class User extends Model {
     password: string;
 
     @Column({
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+    })
+    phone: string;
+
+    @Column({
+        type: DataTypes.STRING,
+        allowNull: false,
+    })
+    address: string;
+
+    @Column({
+        type: DataTypes.DATE,
+        allowNull: false,
+    })
+    birthdate: string;
+
+    @Column({
         type: DataTypes.STRING(500),
         field: 'refresh_token',
     })
     refreshToken: string;
 
-    @CreatedAt
     @Column({
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
     })
     declare createdAt: Date;
 
-    @UpdatedAt
     @Column({
         type: DataTypes.DATE,
         allowNull: true,
@@ -80,4 +88,34 @@ export class User extends Model {
         type: DataTypes.STRING,
     })
     role: Role;
+
+    // For employee
+    @Column({
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    })
+    salary: number;
+
+    @Column({
+        type: DataTypes.TIME,
+        allowNull: true,
+        defaultValue: () => new Date().toTimeString().split(' ')[0],
+    })
+    workStart: string;
+
+    @Column({
+        type: DataTypes.TIME,
+        allowNull: true,
+        defaultValue: () => new Date().toTimeString().split(' ')[0],
+    })
+    workEnd: string;
+
+    // For customer
+    @Column({
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    })
+    loyaltyPoints: number;
 }

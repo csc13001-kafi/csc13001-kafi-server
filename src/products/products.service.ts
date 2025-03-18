@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductDto } from './dtos/create-product.dto';
+import { UpdateProductDto } from './dtos/update-product.dto';
 import { ProductsRepository } from './product.repository';
 
 @Injectable()
@@ -21,7 +21,6 @@ export class ProductsService {
                 );
             }
             const foundProduct = await this.productsRepository.findByName(name);
-            console.log(foundProduct);
             if (foundProduct) {
                 throw new InternalServerErrorException(
                     'Product with the same name already exists',

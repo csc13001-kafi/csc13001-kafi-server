@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './entities/user.model';
 import bcrypt from 'bcrypt';
@@ -6,6 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
+import { Role } from '../auth/enums/roles.enum';
+import { CreateEmployeeDto, CreateCustomerDto } from './dtos/create-user.dto';
+
 @Injectable()
 export class UsersRepository {
     constructor(
@@ -35,31 +38,105 @@ export class UsersRepository {
         }
     }
 
-    async create(CreateDto: UserSignUpDto, role: string): Promise<User> {
-        const { username, email, password } = CreateDto;
+    async createEmployee(CreateDto: CreateEmployeeDto): Promise<User> {
+        const {
+            username,
+            email,
+            phone,
+            address,
+            birthdate,
+            salary,
+            workStart,
+            workEnd,
+        } = CreateDto;
+
+        //TBD: email this password to the employee
+        const password = this.configService.get('DEFAULT_EMPLOYEE_PASSWORD');
         const hashedPassword = await this.hashPassword(password);
 
         const user = await this.userModel.create({
             id: uuidv4(),
             username: username,
             email: email,
+            phone: phone,
+            address: address,
+            birthdate: birthdate,
+            salary: salary,
             password: hashedPassword,
             otp: null,
             otpExpiry: null,
-            role: role,
+            role: Role.EMPLOYEE,
+            workStart: workStart,
+            workEnd: workEnd,
         });
+
         if (!user) {
             throw new InternalServerErrorException(
-                'Error occurs when creating user',
+                'Error occurs when creating employee',
             );
         }
         return user;
     }
 
-    async findAll(): Promise<User[]> {
+    async createCustomer(CreateDto: CreateCustomerDto): Promise<User> {
+        const { username, email, phone, birthdate } = CreateDto;
+
+        const password = this.configService.get('DEFAULT_CUSTOMER_PASSWORD');
+        const hashedPassword = await this.hashPassword(password);
+
+        const user = await this.userModel.create({
+            id: uuidv4(),
+            username: username,
+            email: email,
+            phone: phone,
+            birthdate: birthdate,
+            password: hashedPassword,
+            otp: null,
+            otpExpiry: null,
+            loyaltyPoints: 0,
+            role: Role.GUEST,
+        });
+
+        if (!user) {
+            throw new InternalServerErrorException(
+                'Error occurs when creating customer',
+            );
+        }
+        return user;
+    }
+
+    async createFromClient(CreateDto: UserSignUpDto): Promise<User> {
+        const { username, email, password, phone, address, birthdate } =
+            CreateDto;
+        const hashedPassword = await this.hashPassword(password);
+
+        const user = await this.userModel.create({
+            id: uuidv4(),
+            username: username,
+            email: email,
+            phone: phone,
+            address: address,
+            birthdate: birthdate,
+            password: hashedPassword,
+            otp: null,
+            otpExpiry: null,
+            loyaltyPoints: 0,
+            role: Role.GUEST,
+        });
+        if (!user) {
+            throw new InternalServerErrorException(
+                'Error occurs when creating customer',
+            );
+        }
+        return user;
+    }
+
+    async findAllByRole(role: Role): Promise<User[]> {
         try {
-            const users = await this.userModel.findAll<User>();
-            return users.map((user) => user.dataValues as User);
+            const projects = await this.userModel.findAll<User>({
+                where: { role },
+            });
+            return projects.map((project) => project.dataValues) as User[];
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
@@ -98,6 +175,39 @@ export class UsersRepository {
         } catch (error) {
             throw new InternalServerErrorException((error as Error).message);
         }
+    }
+
+    async updateEmployee(
+        id: string,
+        updateEmployeeDto: Partial<CreateEmployeeDto>,
+    ): Promise<User> {
+        try {
+            const [updatedCount, updatedUsers] = await this.userModel.update(
+                updateEmployeeDto,
+                {
+                    where: { id },
+                    returning: true,
+                },
+            );
+
+            if (updatedCount === 0) {
+                throw new NotFoundException(`Employee with id ${id} not found`);
+            }
+
+            return updatedUsers[0].dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async deleteEmployee(id: string): Promise<{ message: string }> {
+        const employee = await this.userModel.findByPk(id);
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+
+        await employee.destroy();
+        return { message: 'Employee deleted successfully' };
     }
 
     async updateRefreshToken(id: string, refreshToken: string): Promise<void> {

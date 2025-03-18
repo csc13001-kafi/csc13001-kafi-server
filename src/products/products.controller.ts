@@ -9,8 +9,8 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductDto } from './dtos/create-product.dto';
+import { UpdateProductDto } from './dtos/update-product.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
@@ -32,7 +32,6 @@ export class ProductsController {
     @UseGuards(ATAuthGuard, RolesGuard)
     @Roles(Role.MANAGER)
     async create(@Body() createProductDto: CreateProductDto) {
-        console.log(createProductDto);
         return this.productsService.create(createProductDto);
     }
 
