@@ -1,22 +1,27 @@
 import { QueryInterface, DataTypes } from 'sequelize';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export = {
     async up(queryInterface: QueryInterface) {
-        await queryInterface.createTable('accounts', {
+        await queryInterface.createTable('categories', {
             id: {
+                type: DataTypes.UUID,
                 primaryKey: true,
                 unique: true,
-                type: DataTypes.UUID,
+                allowNull: false,
                 defaultValue: DataTypes.UUIDV4,
             },
-            username: {
+            name: {
                 type: DataTypes.STRING,
                 allowNull: false,
+                defaultValue: 'Sample Name',
             },
-            email: {
+            image: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                unique: true,
+                defaultValue: process.env.DEFAULT_CATEGORY_IMAGE,
             },
             createdAt: {
                 type: DataTypes.DATE,
@@ -28,29 +33,10 @@ export = {
                 allowNull: false,
                 defaultValue: DataTypes.NOW,
             },
-            password: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
-            refreshToken: {
-                type: DataTypes.STRING(500),
-                field: 'refresh_token',
-            },
-            otp: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
-            otpExpiry: {
-                type: DataTypes.DATE,
-                allowNull: true,
-            },
-            role: {
-                type: DataTypes.STRING,
-            },
         });
     },
 
     async down(queryInterface: QueryInterface) {
-        await queryInterface.dropTable('accounts');
+        await queryInterface.dropTable('categories');
     },
 };

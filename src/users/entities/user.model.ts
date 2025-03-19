@@ -11,6 +11,7 @@ export class User extends Model {
     @Column({
         primaryKey: true,
         unique: true,
+        allowNull: false,
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
     })
