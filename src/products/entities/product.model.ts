@@ -45,4 +45,16 @@ export class Product extends Model {
         defaultValue: true,
     })
     onStock: boolean;
+
+    @Column({
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+            model: 'categories', // Name of the referenced table
+            key: 'id', // Primary key of the referenced table
+        },
+        onUpdate: 'CASCADE', // If category ID changes, update product
+        onDelete: 'CASCADE', // If category is deleted, delete related products
+    })
+    categoryId: string;
 }

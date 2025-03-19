@@ -9,6 +9,7 @@ import { User } from './users/entities/user.model';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -60,6 +61,7 @@ import { ProductsModule } from './products/products.module';
         AuthModule,
         UsersModule,
         ProductsModule,
+        CategoriesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

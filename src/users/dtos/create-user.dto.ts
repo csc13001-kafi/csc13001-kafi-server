@@ -39,21 +39,3 @@ export class CreateEmployeeDto {
     @IsString()
     workEnd: string;
 }
-
-export class CreateCustomerDto {
-    @ApiProperty()
-    @IsString()
-    username: string;
-
-    @ApiProperty()
-    @IsString()
-    email: string;
-
-    @ApiProperty()
-    @IsPhoneNumber()
-    phone: string;
-
-    @ApiProperty()
-    @IsDateString()
-    birthdate: string;
-}

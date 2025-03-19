@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
-import { ProductsRepository } from './product.repository';
+import { ProductsRepository } from './products.repository';
 import { AccessControlService } from 'src/ac/ac.service';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Product } from './entities/product.model';
@@ -10,6 +10,6 @@ import { Product } from './entities/product.model';
     imports: [SequelizeModule.forFeature([Product])],
     controllers: [ProductsController],
     providers: [ProductsService, ProductsRepository, AccessControlService],
-    exports: [ProductsService, ProductsRepository],
+    exports: [ProductsService, ProductsRepository, AccessControlService],
 })
 export class ProductsModule {}

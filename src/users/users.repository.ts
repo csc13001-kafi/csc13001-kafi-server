@@ -7,7 +7,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
 import { Role } from '../auth/enums/roles.enum';
-import { CreateEmployeeDto, CreateCustomerDto } from './dtos/create-user.dto';
+import { CreateEmployeeDto } from './dtos/create-user.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -78,34 +78,7 @@ export class UsersRepository {
         return user;
     }
 
-    async createCustomer(CreateDto: CreateCustomerDto): Promise<User> {
-        const { username, email, phone, birthdate } = CreateDto;
-
-        const password = this.configService.get('DEFAULT_CUSTOMER_PASSWORD');
-        const hashedPassword = await this.hashPassword(password);
-
-        const user = await this.userModel.create({
-            id: uuidv4(),
-            username: username,
-            email: email,
-            phone: phone,
-            birthdate: birthdate,
-            password: hashedPassword,
-            otp: null,
-            otpExpiry: null,
-            loyaltyPoints: 0,
-            role: Role.GUEST,
-        });
-
-        if (!user) {
-            throw new InternalServerErrorException(
-                'Error occurs when creating customer',
-            );
-        }
-        return user;
-    }
-
-    async createFromClient(CreateDto: UserSignUpDto): Promise<User> {
+    async createCustomer(CreateDto: UserSignUpDto): Promise<User> {
         const { username, email, password, phone, address, birthdate } =
             CreateDto;
         const hashedPassword = await this.hashPassword(password);

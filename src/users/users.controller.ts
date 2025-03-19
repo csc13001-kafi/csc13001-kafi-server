@@ -26,7 +26,7 @@ import { Role } from '../auth/enums/roles.enum';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ProfileDto } from '../auth/dtos/cred.dto';
-import { CreateEmployeeDto, CreateCustomerDto } from './dtos/create-user.dto';
+import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { UpdateEmployeeDto } from './dtos/update-user.dto';
 
 @Controller('users')
@@ -123,19 +123,5 @@ export class UsersController {
     @Roles(Role.MANAGER)
     async deleteEmployee(@Param('id') id: string) {
         return this.usersService.deleteEmployee(id);
-    }
-
-    @ApiOperation({ summary: 'Create customer [EMPLOYEE]' })
-    @ApiBearerAuth('access-token')
-    @Post('customer')
-    @ApiResponse({
-        status: 200,
-        description: 'Create customer successfully',
-        type: ProfileDto,
-    })
-    @UseGuards(ATAuthGuard, RolesGuard)
-    @Roles(Role.EMPLOYEE)
-    async createCustomer(@Body() createCustomerDto: CreateCustomerDto) {
-        return this.usersService.createCustomer(createCustomerDto);
     }
 }

@@ -47,6 +47,7 @@ export class AuthService {
         try {
             const payloadAccessToken = {
                 id: user.id,
+                email: user.email,
                 username: user.username,
                 role: user.role,
             };
@@ -61,7 +62,6 @@ export class AuthService {
 
             const payloadRefreshToken = {
                 id: user.id,
-                username: user.username,
                 email: user.email,
                 role: user.role,
             };
@@ -88,7 +88,7 @@ export class AuthService {
 
     public async signUp(user: UserSignUpDto): Promise<User> {
         try {
-            const newUser = await this.usersRepository.createFromClient(user);
+            const newUser = await this.usersRepository.createCustomer(user);
             return newUser;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
