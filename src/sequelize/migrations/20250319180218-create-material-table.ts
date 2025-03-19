@@ -1,11 +1,8 @@
 import { QueryInterface, DataTypes } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export = {
     async up(queryInterface: QueryInterface) {
-        await queryInterface.createTable('products', {
+        await queryInterface.createTable('materials', {
             id: {
                 type: DataTypes.UUID,
                 primaryKey: true,
@@ -18,20 +15,29 @@ export = {
                 allowNull: false,
                 defaultValue: 'Sample Name',
             },
-            image: {
+            orginalStock: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            currentStock: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            unit: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                defaultValue: process.env.DEFAULT_PRODUCT_IMAGE,
+                defaultValue: 'ml',
+            },
+            expiredDate: {
+                type: DataTypes.DATE,
+                allowNull: false,
             },
             price: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
                 defaultValue: 0,
-            },
-            onStock: {
-                type: DataTypes.BOOLEAN,
-                allowNull: false,
-                defaultValue: true,
             },
             createdAt: {
                 type: DataTypes.DATE,
@@ -47,6 +53,6 @@ export = {
     },
 
     async down(queryInterface: QueryInterface) {
-        await queryInterface.dropTable('products');
+        await queryInterface.dropTable('materials');
     },
 };

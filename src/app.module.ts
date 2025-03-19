@@ -10,6 +10,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
+import { MaterialsModule } from './materials/materials.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -62,6 +63,7 @@ import { CategoriesModule } from './categories/categories.module';
         UsersModule,
         ProductsModule,
         CategoriesModule,
+        MaterialsModule,
     ],
     controllers: [AppController],
     providers: [AppService],
