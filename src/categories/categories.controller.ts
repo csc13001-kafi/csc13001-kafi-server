@@ -52,16 +52,16 @@ export class CategoriesController {
         return this.categoriesService.findAllWithProducts();
     }
 
-    @ApiOperation({ summary: 'Get all categories [GUEST, EMPLOYEE, MANAGER]' })
+    @ApiOperation({ summary: 'Get all categories [MANAGER]' })
     @ApiBearerAuth('access-token')
     @Get()
     @ApiResponse({
         status: 200,
-        description: 'Get all products successfully',
+        description: 'Get all categories successfully',
         type: [CreateCategoryDto],
     })
     @UseGuards(ATAuthGuard, RolesGuard)
-    @Roles(Role.GUEST, Role.EMPLOYEE, Role.MANAGER)
+    @Roles(Role.MANAGER)
     async findAll() {
         return this.categoriesService.findAll();
     }

@@ -3,21 +3,26 @@ import { InjectModel } from '@nestjs/sequelize';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Product } from './entities/product.model';
+import { ProductMaterial } from './entities/product_material.model';
 
 @Injectable()
 export class ProductsRepository {
     constructor(
         @InjectModel(Product) private readonly productModel: typeof Product,
+        @InjectModel(ProductMaterial)
+        private readonly productMaterialModel: typeof ProductMaterial,
     ) {}
 
     async create(CreateDto: CreateProductDto): Promise<Product> {
-        const { name, image, price, onStock } = CreateDto;
+        const { name, image, price, onStock, materials, categoryId } =
+            CreateDto;
 
         const product = await this.productModel.create({
             name: name,
             image: image,
             price: price,
             onStock: onStock,
+            categoryId: categoryId,
         });
 
         if (!product) {
@@ -25,6 +30,16 @@ export class ProductsRepository {
                 'Error occurs when creating product',
             );
         }
+
+        if (materials) {
+            for (const material of materials) {
+                await this.productMaterialModel.create({
+                    productId: product.id,
+                    materialId: material,
+                });
+            }
+        }
+
         return product;
     }
 

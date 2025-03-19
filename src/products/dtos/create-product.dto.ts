@@ -18,4 +18,12 @@ export class CreateProductDto {
     @ApiProperty()
     @IsBoolean()
     onStock: boolean;
+
+    @ApiProperty()
+    @IsString()
+    categoryId: string;
+
+    @ApiProperty()
+    @IsString()
+    materials: string[];
 }

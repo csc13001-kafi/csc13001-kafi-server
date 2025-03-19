@@ -2,18 +2,23 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { ProductsRepository } from './products.repository';
+import { Product } from './entities/product.model';
 
 @Injectable()
 export class ProductsService {
     constructor(private readonly productsRepository: ProductsRepository) {}
 
-    async create(
-        createProductDto: CreateProductDto,
-    ): Promise<CreateProductDto> {
+    async create(createProductDto: CreateProductDto): Promise<Product> {
         try {
-            const { name, price, onStock } = createProductDto;
-            if (!name || !price || onStock === undefined) {
+            const { name, price, onStock, categoryId, materials } =
+                createProductDto;
+            if (!name || !price || onStock === undefined || !categoryId) {
                 throw new InternalServerErrorException('Invalid product data');
+            }
+            if (materials.length === 0) {
+                throw new InternalServerErrorException(
+                    'Product must have materials',
+                );
             }
             if (price < 0) {
                 throw new InternalServerErrorException(
@@ -41,6 +46,7 @@ export class ProductsService {
             image: string;
             price: number;
             onStock: boolean;
+            categoryId: string;
         }[]
     > {
         try {
@@ -57,6 +63,7 @@ export class ProductsService {
         image: string;
         price: number;
         onStock: boolean;
+        categoryId: string;
     }> {
         const product = await this.productsRepository.findById(id);
         if (!product) {
