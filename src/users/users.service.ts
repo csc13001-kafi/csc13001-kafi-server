@@ -28,10 +28,17 @@ export class UsersService {
         return this.usersRepository.deleteEmployee(id);
     }
 
-    async getProfiles(
-        role?: Role,
-    ): Promise<
-        { email: string; username: string; id: string; role: string }[]
+    async getProfiles(role?: Role): Promise<
+        {
+            email: string;
+            username: string;
+            id: string;
+            role: string;
+            phone: string;
+            address: string;
+            birthdate: string;
+            salary: number;
+        }[]
     > {
         try {
             const users = await this.usersRepository.findAllByRole(role);
@@ -41,6 +48,10 @@ export class UsersService {
                 username: user.username,
                 id: user.id,
                 role: user.role,
+                phone: user.phone,
+                address: user.address,
+                birthdate: user.birthdate,
+                salary: user.salary,
             }));
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
