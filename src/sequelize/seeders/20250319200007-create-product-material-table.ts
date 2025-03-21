@@ -1,4 +1,5 @@
 import { QueryInterface, QueryTypes } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 
 export = {
     async up(queryInterface: QueryInterface) {
@@ -29,33 +30,39 @@ export = {
         const joinRecords = [
             // For example, Product A uses materials: "sữa" and "đường"
             {
+                id: uuidv4(),
                 productId: productMap['Product A'],
                 materialId: materialMap['sữa'],
                 quantity: 50,
             },
             {
+                id: uuidv4(),
                 productId: productMap['Product A'],
                 materialId: materialMap['đường'],
                 quantity: 10,
             },
             // Product B uses: "cà phê" and "đường"
             {
+                id: uuidv4(),
                 productId: productMap['Product B'],
                 materialId: materialMap['cà phê'],
                 quantity: 20,
             },
             {
+                id: uuidv4(),
                 productId: productMap['Product B'],
                 materialId: materialMap['đường'],
                 quantity: 5,
             },
             // Product C uses: "trà" and "bột cacao"
             {
+                id: uuidv4(),
                 productId: productMap['Product C'],
                 materialId: materialMap['trà'],
                 quantity: 30,
             },
             {
+                id: uuidv4(),
                 productId: productMap['Product C'],
                 materialId: materialMap['bột cacao'],
                 quantity: 5,

@@ -268,4 +268,15 @@ export class UsersRepository {
         }
         return project.dataValues as User;
     }
+
+    async updateProfileImage(id: string, imageUrl: string): Promise<void> {
+        try {
+            await this.userModel.update(
+                { profileImage: imageUrl },
+                { where: { id } },
+            );
+        } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
 }

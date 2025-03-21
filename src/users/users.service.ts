@@ -8,10 +8,14 @@ import { User } from './entities/user.model';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { Role } from '../auth/enums/roles.enum';
 import { UpdateEmployeeDto } from './dtos/update-user.dto';
-
+import type { Multer } from 'multer';
+import { UploadService } from '../uploader/upload.service';
 @Injectable()
 export class UsersService {
-    constructor(private readonly usersRepository: UsersRepository) {}
+    constructor(
+        private readonly usersRepository: UsersRepository,
+        private readonly uploadService: UploadService,
+    ) {}
 
     async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<User> {
         return this.usersRepository.createEmployee(createEmployeeDto);
@@ -85,5 +89,23 @@ export class UsersService {
                 error.message,
             );
         }
+    }
+
+    async updateProfileImage(
+        userId: string,
+        file: Multer.File,
+    ): Promise<{ message: string; user: Partial<User> }> {
+        const imageUrl = await this.uploadService.uploadFile(file, 'users');
+        await this.usersRepository.updateProfileImage(userId, imageUrl);
+        const user = await this.usersRepository.findOneById(userId);
+        const newUser = {
+            id: user.id,
+            username: user.username,
+            profileImage: user.profileImage,
+        };
+        return {
+            message: 'Profile image uploaded successfully',
+            user: newUser,
+        };
     }
 }

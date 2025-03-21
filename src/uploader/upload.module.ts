@@ -3,8 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UploadService } from './upload.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { UploadController } from './upload.controller';
-import { AccessControlService } from 'src/ac/ac.service';
+import { AccessControlService } from '../ac/ac.service';
 
 @Module({
     imports: [
@@ -13,7 +12,6 @@ import { AccessControlService } from 'src/ac/ac.service';
             storage: memoryStorage(),
         }),
     ],
-    controllers: [UploadController],
     providers: [UploadService, AccessControlService],
     exports: [UploadService],
 })

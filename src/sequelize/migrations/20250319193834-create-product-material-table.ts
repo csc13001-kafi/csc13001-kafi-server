@@ -3,9 +3,14 @@ import { QueryInterface, DataTypes } from 'sequelize';
 export = {
     async up(queryInterface: QueryInterface) {
         await queryInterface.createTable('product_materials', {
+            id: {
+                type: DataTypes.UUID,
+                allowNull: false,
+                primaryKey: true,
+                defaultValue: DataTypes.UUIDV4,
+            },
             productId: {
                 type: DataTypes.UUID,
-                primaryKey: true,
                 allowNull: false,
                 references: {
                     model: 'products',

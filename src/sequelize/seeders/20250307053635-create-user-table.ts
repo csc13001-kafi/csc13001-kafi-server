@@ -50,6 +50,7 @@ export = {
                     workStart: '09:00:00',
                     workEnd: '17:00:00',
                     loyaltyPoints: 0,
+                    profileImage: process.env.DEFAULT_PROFILE_IMAGE,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 },
@@ -66,6 +67,7 @@ export = {
                     workStart: '08:30:00',
                     workEnd: '16:30:00',
                     loyaltyPoints: 0,
+                    profileImage: process.env.DEFAULT_PROFILE_IMAGE,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 },
@@ -78,10 +80,11 @@ export = {
                     address: 'Da Nang, Vietnam',
                     birthdate: new Date('2000-09-20'),
                     role: Role.GUEST,
-                    salary: 0, // Guests don’t have salaries
+                    salary: 0, // Guests don't have salaries
                     workStart: null,
                     workEnd: null,
                     loyaltyPoints: 50, // Guests can have some initial loyalty points
+                    profileImage: process.env.DEFAULT_PROFILE_IMAGE,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 },

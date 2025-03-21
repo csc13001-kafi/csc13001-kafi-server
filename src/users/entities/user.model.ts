@@ -119,4 +119,11 @@ export class User extends Model {
         defaultValue: 0,
     })
     loyaltyPoints: number;
+
+    @Column({
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: process.env.DEFAULT_PROFILE_IMAGE,
+    })
+    profileImage: string;
 }

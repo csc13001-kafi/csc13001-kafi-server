@@ -12,6 +12,9 @@ import {
     Request,
     Res,
     UseGuards,
+    UseInterceptors,
+    UploadedFile,
+    Put,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -20,6 +23,8 @@ import {
     ApiBearerAuth,
     ApiResponse,
     ApiQuery,
+    ApiConsumes,
+    ApiBody,
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
@@ -28,7 +33,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ProfileDto } from '../auth/dtos/cred.dto';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { UpdateEmployeeDto } from './dtos/update-user.dto';
-
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Multer } from 'multer';
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
@@ -123,5 +129,27 @@ export class UsersController {
     @Roles(Role.MANAGER)
     async deleteEmployee(@Param('id') id: string) {
         return this.usersService.deleteEmployee(id);
+    }
+
+    @ApiOperation({ summary: 'Upload profile image [USER]' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                image: { type: 'string', format: 'binary' },
+            },
+            required: ['image'],
+        },
+    })
+    @Put('user/image')
+    @UseGuards(ATAuthGuard)
+    @UseInterceptors(FileInterceptor('image'))
+    async uploadProfileImage(
+        @Request() req: any,
+        @UploadedFile() file: Multer.File,
+    ) {
+        return this.usersService.updateProfileImage(req.user.id, file);
     }
 }

@@ -1,4 +1,7 @@
 import { QueryInterface, DataTypes } from 'sequelize';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export = {
     async up(queryInterface: QueryInterface) {
@@ -68,6 +71,11 @@ export = {
                 type: DataTypes.INTEGER,
                 allowNull: false,
                 defaultValue: 0,
+            },
+            profileImage: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                defaultValue: process.env.DEFAULT_PROFILE_IMAGE,
             },
             createdAt: {
                 type: DataTypes.DATE,
