@@ -1,32 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CategoriesRepository } from './categories.repository';
 import { ProductsRepository } from 'src/products/products.repository';
-
+import type { Multer } from 'multer';
+import { Category } from '../categories/entities/category.model';
+import { UploadService } from '../uploader/upload.service';
 @Injectable()
 export class CategoriesService {
     constructor(
         private readonly categoriesRepository: CategoriesRepository,
         private readonly productsRepository: ProductsRepository,
+        private readonly uploadService: UploadService,
     ) {}
 
-    async create(createCategoryDto: CreateCategoryDto) {
+    async create(
+        createCategoryDto: CreateCategoryDto,
+        file: Multer.File,
+    ): Promise<Category> {
         try {
-            const { name, image } = createCategoryDto;
-            if (!name || !image) {
-                throw new Error('Invalid category data');
+            const { name } = createCategoryDto;
+            if (!name) {
+                throw new InternalServerErrorException('Invalid category data');
             }
+
+            if (!file) {
+                throw new InternalServerErrorException('File is required');
+            }
+
+            const imageUrl = await this.uploadService.uploadFile(
+                file,
+                'categories',
+            );
+            createCategoryDto.image = imageUrl;
+
             const foundCategory =
                 await this.categoriesRepository.findByName(name);
             if (foundCategory) {
-                throw new Error('Category with the same name already exists');
+                throw new InternalServerErrorException(
+                    'Category with the same name already exists',
+                );
             }
             const newCategory =
                 await this.categoriesRepository.create(createCategoryDto);
             return newCategory;
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -53,7 +72,7 @@ export class CategoriesService {
                 })),
             };
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -68,7 +87,7 @@ export class CategoriesService {
             const categories = await this.categoriesRepository.findAll();
             return categories;
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -81,22 +100,31 @@ export class CategoriesService {
             const category = await this.categoriesRepository.findById(id);
             return category;
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
     async update(
         id: string,
         updateCategoryDto: UpdateCategoryDto,
+        file?: Multer.File,
     ): Promise<{
         id: string;
         name: string;
         image: string;
     }> {
+        const category = await this.categoriesRepository.findById(id);
+        if (!category) {
+            throw new InternalServerErrorException('Category not found');
+        }
+
         try {
-            const category = await this.categoriesRepository.findById(id);
-            if (!category) {
-                throw new Error('Category not found');
+            if (file) {
+                const imageUrl = await this.uploadService.uploadFile(
+                    file,
+                    'categories',
+                );
+                updateCategoryDto.image = imageUrl;
             }
             const updatedCategory = await this.categoriesRepository.update(
                 category,
@@ -104,7 +132,7 @@ export class CategoriesService {
             );
             return updatedCategory;
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -112,11 +140,11 @@ export class CategoriesService {
         try {
             const category = await this.categoriesRepository.findById(id);
             if (!category) {
-                throw new Error('Category not found');
+                throw new InternalServerErrorException('Category not found');
             }
             await this.categoriesRepository.delete(category);
         } catch (error: any) {
-            throw new Error((error as Error).message);
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 }

@@ -85,7 +85,6 @@ export class ProductsController {
         if (!file) {
             throw new BadRequestException('File is required');
         }
-        console.log(createProductDto);
         return this.productsService.create(createProductDto, file);
     }
 

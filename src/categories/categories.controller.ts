@@ -7,16 +7,27 @@ import {
     Param,
     Delete,
     UseGuards,
+    UseInterceptors,
+    UploadedFile,
+    BadRequestException,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiBody,
+    ApiConsumes,
+    ApiOperation,
+    ApiResponse,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { MenuDto } from './dtos/menu.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Multer } from 'multer';
 
 @Controller('categories')
 export class CategoriesController {
@@ -25,6 +36,17 @@ export class CategoriesController {
     @ApiOperation({ summary: 'Create a new category [MANAGER]' })
     @ApiBearerAuth('access-token')
     @Post()
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary' },
+                name: { type: 'string' },
+            },
+            required: ['file', 'name'],
+        },
+    })
     @ApiResponse({
         status: 201,
         description: 'Category created successfully',
@@ -32,8 +54,15 @@ export class CategoriesController {
     })
     @UseGuards(ATAuthGuard, RolesGuard)
     @Roles(Role.MANAGER)
-    async create(@Body() createCategoryDto: CreateCategoryDto) {
-        return this.categoriesService.create(createCategoryDto);
+    @UseInterceptors(FileInterceptor('file'))
+    async create(
+        @UploadedFile() file: Multer.File,
+        @Body() createCategoryDto: CreateCategoryDto,
+    ) {
+        if (!file) {
+            throw new BadRequestException('File is required');
+        }
+        return this.categoriesService.create(createCategoryDto, file);
     }
 
     @ApiOperation({
@@ -85,6 +114,17 @@ export class CategoriesController {
     @ApiOperation({ summary: 'Update a category by id [MANAGER]' })
     @ApiBearerAuth('access-token')
     @Patch(':id')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary' },
+                name: { type: 'string' },
+            },
+            required: [],
+        },
+    })
     @ApiResponse({
         status: 200,
         description: 'Category updated successfully',
@@ -92,11 +132,13 @@ export class CategoriesController {
     })
     @UseGuards(ATAuthGuard, RolesGuard)
     @Roles(Role.MANAGER)
+    @UseInterceptors(FileInterceptor('file'))
     async update(
         @Param('id') id: string,
-        @Body() updateProductDto: UpdateCategoryDto,
+        @UploadedFile() file: Multer.File,
+        @Body() updateCategoryDto: UpdateCategoryDto,
     ) {
-        return this.categoriesService.update(id, updateProductDto);
+        return this.categoriesService.update(id, updateCategoryDto, file);
     }
 
     @ApiOperation({ summary: 'Delete a category by id [MANAGER]' })
