@@ -31,28 +31,34 @@ export = {
             {
                 productId: productMap['Product A'],
                 materialId: materialMap['sữa'],
+                quantity: 50,
             },
             {
                 productId: productMap['Product A'],
                 materialId: materialMap['đường'],
+                quantity: 10,
             },
             // Product B uses: "cà phê" and "đường"
             {
                 productId: productMap['Product B'],
                 materialId: materialMap['cà phê'],
+                quantity: 20,
             },
             {
                 productId: productMap['Product B'],
                 materialId: materialMap['đường'],
+                quantity: 5,
             },
             // Product C uses: "trà" and "bột cacao"
             {
                 productId: productMap['Product C'],
                 materialId: materialMap['trà'],
+                quantity: 30,
             },
             {
                 productId: productMap['Product C'],
                 materialId: materialMap['bột cacao'],
+                quantity: 5,
             },
         ].filter((record) => record.productId && record.materialId); // Filter out any records with missing references
 

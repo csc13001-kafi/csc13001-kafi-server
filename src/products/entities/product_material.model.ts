@@ -1,4 +1,10 @@
-import { Column, Model, Table, ForeignKey } from 'sequelize-typescript';
+import {
+    Column,
+    Model,
+    Table,
+    ForeignKey,
+    PrimaryKey,
+} from 'sequelize-typescript';
 import { DataTypes } from 'sequelize';
 import { Product } from './product.model';
 import { Material } from '../../materials/entities/material.model';
@@ -8,6 +14,7 @@ import { Material } from '../../materials/entities/material.model';
     timestamps: false,
 })
 export class ProductMaterial extends Model {
+    @PrimaryKey
     @ForeignKey(() => Product)
     @Column({
         type: DataTypes.UUID,
@@ -21,4 +28,10 @@ export class ProductMaterial extends Model {
         allowNull: false,
     })
     materialId: string;
+
+    @Column({
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    })
+    quantity: number;
 }

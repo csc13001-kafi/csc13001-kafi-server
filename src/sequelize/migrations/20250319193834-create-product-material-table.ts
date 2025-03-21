@@ -5,6 +5,7 @@ export = {
         await queryInterface.createTable('product_materials', {
             productId: {
                 type: DataTypes.UUID,
+                primaryKey: true,
                 allowNull: false,
                 references: {
                     model: 'products',
@@ -22,6 +23,10 @@ export = {
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE',
+            },
+            quantity: {
+                type: DataTypes.INTEGER,
+                allowNull: false,
             },
         });
     },
