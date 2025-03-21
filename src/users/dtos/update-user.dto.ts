@@ -21,7 +21,7 @@ export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
 
     @ApiProperty({ required: false })
     @IsOptional()
-    @IsPhoneNumber()
+    @IsPhoneNumber('VN')
     phone?: string;
 
     @ApiProperty({ required: false })

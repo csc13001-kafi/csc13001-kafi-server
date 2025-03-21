@@ -16,7 +16,7 @@ export class CreateEmployeeDto {
     email: string;
 
     @ApiProperty()
-    @IsPhoneNumber()
+    @IsPhoneNumber('VN')
     phone: string;
 
     @ApiProperty()

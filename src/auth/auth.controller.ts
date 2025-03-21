@@ -7,6 +7,7 @@ import {
     Request,
     Res,
     Get,
+    Delete,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -84,7 +85,7 @@ export class AuthController {
         status: 200,
         description: 'Sign-out successful',
     })
-    @Post('sign-out')
+    @Delete('sign-out')
     @UseGuards(ATAuthGuard)
     @HttpCode(200)
     async signOut(@Request() req: any, @Res() res: Response): Promise<void> {
