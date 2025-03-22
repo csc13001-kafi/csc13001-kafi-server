@@ -38,6 +38,13 @@ export class UsersRepository {
         }
     }
 
+    async findOneByPhoneNumber(phoneNumber: string): Promise<User> {
+        const user = await this.userModel.findOne<User>({
+            where: { phone: phoneNumber },
+        });
+        return user.dataValues as User;
+    }
+
     async createEmployee(CreateDto: CreateEmployeeDto): Promise<User> {
         const {
             username,

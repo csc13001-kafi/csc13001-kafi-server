@@ -6,6 +6,7 @@ graph LR
   AppModule-->MailerCoreModule
   AppModule-->MailerModule
   AppModule-->MaterialsModule
+  AppModule-->OrdersModule
   AppModule-->ProductsModule
   AppModule-->SequelizeCoreModule
   AppModule-->SequelizeModule
@@ -51,6 +52,13 @@ graph LR
   MulterModule-->ConfigModule
   MulterModule-->MailerCoreModule
   MulterModule-->SequelizeCoreModule
+  OrdersModule-->ConfigHostModule
+  OrdersModule-->ConfigModule
+  OrdersModule-->MailerCoreModule
+  OrdersModule-->ProductsModule
+  OrdersModule-->SequelizeCoreModule
+  OrdersModule-->SequelizeModule
+  OrdersModule-->UsersModule
   PassportModule-->ConfigHostModule
   PassportModule-->ConfigModule
   PassportModule-->MailerCoreModule

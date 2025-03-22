@@ -12,6 +12,7 @@ import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
 import { MaterialsModule } from './materials/materials.module';
 import { UploadModule } from './uploader/upload.module';
+import { OrdersModule } from './orders/orders.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -66,6 +67,7 @@ import { UploadModule } from './uploader/upload.module';
         CategoriesModule,
         MaterialsModule,
         UploadModule,
+        OrdersModule,
     ],
     controllers: [AppController],
     providers: [AppService],
