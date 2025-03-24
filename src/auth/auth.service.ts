@@ -113,20 +113,24 @@ export class AuthService {
 
             const payload = this.jwtService.verify<{
                 id: string;
-                username: string;
+                email: string;
                 role: Role;
             }>(refreshToken, {
                 secret: this.configService.get('RT_SECRET'),
             });
 
+            const user = await this.usersRepository.findOneByEmail(
+                payload.email,
+            );
+
             const payloadAccessToken = {
                 id: payload.id,
-                username: payload.username,
+                username: user.username,
                 role: payload.role,
             };
 
             const newAT = await this.jwtService.signAsync(payloadAccessToken, {
-                expiresIn: '15m',
+                expiresIn: '1h',
                 secret: this.configService.get('AT_SECRET'),
             });
 

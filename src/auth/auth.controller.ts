@@ -8,6 +8,7 @@ import {
     Res,
     Get,
     Delete,
+    Put,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -166,7 +167,7 @@ export class AuthController {
 
     @ApiOperation({ summary: 'Change password' })
     @ApiBearerAuth('access-token')
-    @Post('change-password')
+    @Put('change-password')
     @ApiBody({ type: ChangePasswordDto })
     @ApiResponse({
         status: 200,
