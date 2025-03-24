@@ -8,12 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
 import { Role } from '../auth/enums/roles.enum';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
+import { UpdateProfileDto } from './dtos/update-user.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UsersRepository {
     constructor(
         @InjectModel(User) private readonly userModel: typeof User,
         private readonly configService: ConfigService,
+        private readonly mailerService: MailerService,
     ) {}
 
     async validatePassword(password: string, user: User): Promise<boolean> {
@@ -57,8 +60,15 @@ export class UsersRepository {
             workEnd,
         } = CreateDto;
 
-        //TBD: email this password to the employee
-        const password = this.configService.get('DEFAULT_EMPLOYEE_PASSWORD');
+        const password =
+            this.configService.get('DEFAULT_EMPLOYEE_PASSWORD') ||
+            this.generateRandomPassword();
+
+        await this.mailerService.sendMail({
+            to: email,
+            subject: '[Kafi - POS System] Welcome you to Kafi',
+            text: `Welcome you to onboard. As your account is created, your password is: ${password} \n After logging in our Kafi POS System, please change your password to a more secure one. \n Please do not reply this message.`,
+        });
         const hashedPassword = await this.hashPassword(password);
 
         const user = await this.userModel.create({
@@ -153,6 +163,28 @@ export class UsersRepository {
             });
             return project.dataValues as User;
         } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async updateProfile(
+        id: string,
+        updateProfileDto: Partial<UpdateProfileDto>,
+    ): Promise<User> {
+        try {
+            const [updatedCount, updatedUsers] = await this.userModel.update(
+                updateProfileDto,
+                { where: { id }, returning: true },
+            );
+
+            if (updatedCount === 0) {
+                throw new NotFoundException(
+                    `The session user with id ${id} not found`,
+                );
+            }
+
+            return updatedUsers[0].dataValues as User;
+        } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
     }
@@ -285,5 +317,10 @@ export class UsersRepository {
         } catch (error) {
             throw new InternalServerErrorException((error as Error).message);
         }
+    }
+
+    private generateRandomPassword(): string {
+        // Generate a random 6-digit number
+        return Math.floor(100000 + Math.random() * 900000).toString();
     }
 }

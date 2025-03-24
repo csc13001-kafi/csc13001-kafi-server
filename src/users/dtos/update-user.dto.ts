@@ -8,6 +8,28 @@ import {
 } from 'class-validator';
 import { CreateEmployeeDto } from './create-user.dto';
 
+export class UpdateProfileDto {
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    username?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    email?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsPhoneNumber('VN')
+    phone?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsDateString()
+    birthdate?: string;
+}
+
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
     @ApiProperty({ required: false })
     @IsOptional()
