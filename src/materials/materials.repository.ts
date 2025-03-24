@@ -15,7 +15,8 @@ export class MaterialsRepository {
 
         const material = await this.materialModel.create({
             name: name,
-            originalStock: originalStock,
+            orginalStock: originalStock,
+            currentStock: originalStock,
             unit: unit,
             expiredDate: expiredDate,
             price: price,
