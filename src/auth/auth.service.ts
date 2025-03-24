@@ -180,6 +180,39 @@ export class AuthService {
         }
     }
 
+    async changePassword(
+        id: string,
+        oldPassword: string,
+        newPassword: string,
+        confirmPassword: string,
+    ): Promise<void> {
+        const user = await this.usersRepository.findOneById(id);
+        if (!user) throw new NotFoundException('User not found');
+        const isValidPassword = await this.usersRepository.validatePassword(
+            oldPassword,
+            user,
+        );
+
+        if (!isValidPassword) {
+            throw new BadRequestException('Invalid old password');
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new BadRequestException('Passwords do not match');
+        }
+
+        try {
+            const hashedPassword =
+                await this.usersRepository.hashPassword(newPassword);
+            await this.usersRepository.updatePassword(
+                user.email,
+                hashedPassword,
+            );
+        } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
     async resetPassword(
         email: string,
         otp: string,

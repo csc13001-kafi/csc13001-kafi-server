@@ -25,6 +25,7 @@ import { CredDto } from './dtos/cred.dto';
 import { AuthLoginDto } from './dtos/user-signin.dto';
 import { UserSignUpDto } from './dtos/user-signup.dto';
 import {
+    ChangePasswordDto,
     ForgotPasswordDto,
     ResetPasswordDto,
     VerifyOtpDto,
@@ -160,6 +161,31 @@ export class AuthController {
         await this.authService.forgotPassword(req.body.email);
         res.send({
             message: 'Password recovery email has been sent successfully',
+        });
+    }
+
+    @ApiOperation({ summary: 'Change password' })
+    @ApiBearerAuth('access-token')
+    @Post('change-password')
+    @ApiBody({ type: ChangePasswordDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Password changed successfully',
+    })
+    @HttpCode(200)
+    @UseGuards(ATAuthGuard)
+    async changePassword(
+        @Request() req: any,
+        @Res() res: Response,
+    ): Promise<void> {
+        await this.authService.changePassword(
+            req.user.id,
+            req.body.oldPassword,
+            req.body.newPassword,
+            req.body.confirmPassword,
+        );
+        res.send({
+            message: 'Password has been changed successfully',
         });
     }
 
