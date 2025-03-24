@@ -7,7 +7,7 @@ import { UsersRepository } from './users.repository';
 import { User } from './entities/user.model';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { Role } from '../auth/enums/roles.enum';
-import { UpdateEmployeeDto } from './dtos/update-user.dto';
+import { UpdateEmployeeDto, UpdateProfileDto } from './dtos/update-user.dto';
 import type { Multer } from 'multer';
 import { UploadService } from '../uploader/upload.service';
 @Injectable()
@@ -19,6 +19,13 @@ export class UsersService {
 
     async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<User> {
         return this.usersRepository.createEmployee(createEmployeeDto);
+    }
+
+    async updateProfile(
+        id: string,
+        updateProfileDto: Partial<UpdateProfileDto>,
+    ): Promise<User> {
+        return this.usersRepository.updateProfile(id, updateProfileDto);
     }
 
     async updateEmployee(

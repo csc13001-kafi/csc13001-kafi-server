@@ -32,7 +32,7 @@ import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ProfileDto } from '../auth/dtos/cred.dto';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
-import { UpdateEmployeeDto } from './dtos/update-user.dto';
+import { UpdateEmployeeDto, UpdateProfileDto } from './dtos/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Multer } from 'multer';
 @Controller('users')
@@ -68,7 +68,9 @@ export class UsersController {
         res.send(foundUsers);
     }
 
-    @ApiOperation({ summary: 'Get profile with credentials [USER]' })
+    @ApiOperation({
+        summary: 'Get profile with credentials [GUEST, EMPLOYEE, MANAGER]',
+    })
     @ApiBearerAuth('access-token')
     @Get('user')
     @ApiResponse({
@@ -85,6 +87,29 @@ export class UsersController {
             role: string;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
+    }
+
+    @ApiOperation({ summary: 'Update profile [GUEST, EMPLOYEE, MANAGER]' })
+    @ApiBearerAuth('access-token')
+    @Patch('user')
+    @ApiResponse({
+        status: 200,
+        description: 'Update profile successfully',
+        type: ProfileDto,
+    })
+    @UseGuards(ATAuthGuard)
+    async updateProfile(
+        @Request() req: any,
+        @Body() updateProfileDto: UpdateProfileDto,
+    ) {
+        if (req.user.role === Role.GUEST || req.user.role === Role.MANAGER) {
+            return this.usersService.updateProfile(
+                req.user.id,
+                updateProfileDto,
+            );
+        }
+
+        return this.usersService.updateEmployee(req.user.id, updateProfileDto);
     }
 
     @ApiOperation({ summary: 'Create employee [MANAGER]' })

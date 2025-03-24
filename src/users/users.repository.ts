@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
 import { Role } from '../auth/enums/roles.enum';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
+import { UpdateProfileDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -153,6 +154,28 @@ export class UsersRepository {
             });
             return project.dataValues as User;
         } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async updateProfile(
+        id: string,
+        updateProfileDto: Partial<UpdateProfileDto>,
+    ): Promise<User> {
+        try {
+            const [updatedCount, updatedUsers] = await this.userModel.update(
+                updateProfileDto,
+                { where: { id }, returning: true },
+            );
+
+            if (updatedCount === 0) {
+                throw new NotFoundException(
+                    `The session user with id ${id} not found`,
+                );
+            }
+
+            return updatedUsers[0].dataValues as User;
+        } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
     }
