@@ -85,6 +85,10 @@ export class UsersController {
             username: string;
             id: string;
             role: string;
+            phoneNumber: string;
+            address: string;
+            image: string;
+            salary: number;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
     }

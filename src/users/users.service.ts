@@ -74,6 +74,10 @@ export class UsersService {
         username: string;
         id: string;
         role: string;
+        phoneNumber: string;
+        address: string;
+        image: string;
+        salary: number;
     }> {
         try {
             const { id } = profileUser;
@@ -88,6 +92,10 @@ export class UsersService {
                 username: user.username,
                 id: user.id,
                 role: user.role,
+                phoneNumber: user.phone,
+                address: user.address,
+                image: user.profileImage,
+                salary: user.salary,
             };
             return newUser;
         } catch (error) {
