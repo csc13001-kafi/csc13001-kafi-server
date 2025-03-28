@@ -89,6 +89,7 @@ export class UsersController {
             address: string;
             image: string;
             salary: number;
+            birthdate: string;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
     }
@@ -99,7 +100,7 @@ export class UsersController {
     @ApiResponse({
         status: 200,
         description: 'Update profile successfully',
-        type: ProfileDto,
+        type: UpdateProfileDto,
     })
     @UseGuards(ATAuthGuard)
     async updateProfile(

@@ -85,11 +85,11 @@ export class OrdersController {
         return this.ordersService.checkoutOrder(req.user.id, createOrderDto);
     }
 
-    @ApiOperation({ summary: 'Get all orders [MANAGER]' })
+    @ApiOperation({ summary: 'Get all orders [EMPLOYEE, MANAGER]' })
     @ApiBearerAuth('access-token')
     @Get()
     @UseGuards(ATAuthGuard)
-    @Roles(Role.MANAGER)
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
     async getAllOrders() {
         return this.ordersService.getAllOrders();
     }

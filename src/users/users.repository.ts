@@ -137,6 +137,9 @@ export class UsersRepository {
             const project = await this.userModel.findOne<User>({
                 where: { email },
             });
+            if (!project) {
+                throw new NotFoundException('User not found');
+            }
 
             return project.dataValues as User;
         } catch (error: any) {

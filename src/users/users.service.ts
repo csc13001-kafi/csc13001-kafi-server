@@ -49,6 +49,7 @@ export class UsersService {
             address: string;
             birthdate: string;
             salary: number;
+            image: string;
         }[]
     > {
         try {
@@ -63,6 +64,7 @@ export class UsersService {
                 address: user.address,
                 birthdate: user.birthdate,
                 salary: user.salary,
+                image: user.profileImage,
             }));
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
@@ -78,6 +80,7 @@ export class UsersService {
         address: string;
         image: string;
         salary: number;
+        birthdate: string;
     }> {
         try {
             const { id } = profileUser;
@@ -96,6 +99,7 @@ export class UsersService {
                 address: user.address,
                 image: user.profileImage,
                 salary: user.salary,
+                birthdate: user.birthdate,
             };
             return newUser;
         } catch (error) {
