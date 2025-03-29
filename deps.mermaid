@@ -8,6 +8,7 @@ graph LR
   AppModule-->MaterialsModule
   AppModule-->OrdersModule
   AppModule-->ProductsModule
+  AppModule-->RedisCoreModule
   AppModule-->SequelizeCoreModule
   AppModule-->SequelizeModule
   AppModule-->UploadModule
@@ -17,71 +18,97 @@ graph LR
   AuthModule-->JwtModule
   AuthModule-->MailerCoreModule
   AuthModule-->PassportModule
+  AuthModule-->RedisCoreModule
+  AuthModule-->RedisModule
   AuthModule-->SequelizeCoreModule
   AuthModule-->UsersModule
   CategoriesModule-->ConfigHostModule
   CategoriesModule-->ConfigModule
   CategoriesModule-->MailerCoreModule
   CategoriesModule-->ProductsModule
+  CategoriesModule-->RedisCoreModule
   CategoriesModule-->SequelizeCoreModule
   CategoriesModule-->SequelizeModule
   ConfigHostModule-->ConfigModule
   ConfigHostModule-->MailerCoreModule
+  ConfigHostModule-->RedisCoreModule
   ConfigHostModule-->SequelizeCoreModule
   ConfigModule-->ConfigHostModule
   ConfigModule-->ConfigModule
   ConfigModule-->MailerCoreModule
+  ConfigModule-->RedisCoreModule
   ConfigModule-->SequelizeCoreModule
   JwtModule-->ConfigHostModule
   JwtModule-->ConfigModule
   JwtModule-->MailerCoreModule
+  JwtModule-->RedisCoreModule
   JwtModule-->SequelizeCoreModule
   MailerCoreModule-->ConfigHostModule
   MailerCoreModule-->ConfigModule
+  MailerCoreModule-->RedisCoreModule
   MailerCoreModule-->SequelizeCoreModule
   MailerModule-->ConfigHostModule
   MailerModule-->ConfigModule
   MailerModule-->MailerCoreModule
+  MailerModule-->RedisCoreModule
   MailerModule-->SequelizeCoreModule
   MaterialsModule-->ConfigHostModule
   MaterialsModule-->ConfigModule
   MaterialsModule-->MailerCoreModule
+  MaterialsModule-->RedisCoreModule
   MaterialsModule-->SequelizeCoreModule
   MaterialsModule-->SequelizeModule
   MulterModule-->ConfigHostModule
   MulterModule-->ConfigModule
   MulterModule-->MailerCoreModule
+  MulterModule-->RedisCoreModule
   MulterModule-->SequelizeCoreModule
   OrdersModule-->ConfigHostModule
   OrdersModule-->ConfigModule
   OrdersModule-->MailerCoreModule
   OrdersModule-->ProductsModule
+  OrdersModule-->RedisCoreModule
   OrdersModule-->SequelizeCoreModule
   OrdersModule-->SequelizeModule
   OrdersModule-->UsersModule
   PassportModule-->ConfigHostModule
   PassportModule-->ConfigModule
   PassportModule-->MailerCoreModule
+  PassportModule-->RedisCoreModule
   PassportModule-->SequelizeCoreModule
   ProductsModule-->ConfigHostModule
   ProductsModule-->ConfigModule
   ProductsModule-->MailerCoreModule
+  ProductsModule-->RedisCoreModule
   ProductsModule-->SequelizeCoreModule
   ProductsModule-->SequelizeModule
+  RedisCoreModule-->ConfigHostModule
+  RedisCoreModule-->ConfigModule
+  RedisCoreModule-->MailerCoreModule
+  RedisCoreModule-->SequelizeCoreModule
+  RedisModule-->ConfigHostModule
+  RedisModule-->ConfigModule
+  RedisModule-->MailerCoreModule
+  RedisModule-->RedisCoreModule
+  RedisModule-->SequelizeCoreModule
   SequelizeCoreModule-->ConfigHostModule
   SequelizeCoreModule-->ConfigModule
   SequelizeCoreModule-->MailerCoreModule
+  SequelizeCoreModule-->RedisCoreModule
   SequelizeModule-->ConfigHostModule
   SequelizeModule-->ConfigModule
   SequelizeModule-->MailerCoreModule
+  SequelizeModule-->RedisCoreModule
   SequelizeModule-->SequelizeCoreModule
   UploadModule-->ConfigHostModule
   UploadModule-->ConfigModule
   UploadModule-->MailerCoreModule
   UploadModule-->MulterModule
+  UploadModule-->RedisCoreModule
   UploadModule-->SequelizeCoreModule
   UsersModule-->ConfigHostModule
   UsersModule-->ConfigModule
   UsersModule-->MailerCoreModule
+  UsersModule-->RedisCoreModule
   UsersModule-->SequelizeCoreModule
   UsersModule-->SequelizeModule

@@ -10,6 +10,8 @@ import { Role } from '../auth/enums/roles.enum';
 import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { UpdateProfileDto } from './dtos/update-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class UsersRepository {
@@ -17,6 +19,7 @@ export class UsersRepository {
         @InjectModel(User) private readonly userModel: typeof User,
         private readonly configService: ConfigService,
         private readonly mailerService: MailerService,
+        @InjectRedis() private readonly redisClient: Redis,
     ) {}
 
     async validatePassword(password: string, user: User): Promise<boolean> {
@@ -226,20 +229,15 @@ export class UsersRepository {
     }
 
     async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
-        try {
-            if (refreshToken === 'null') {
-                await this.userModel.update(
-                    { refreshToken: null },
-                    { where: { id: id } },
-                );
-            } else {
-                await this.userModel.update(
-                    { refreshToken: refreshToken },
-                    { where: { id: id } },
-                );
-            }
-        } catch (error) {
-            throw new InternalServerErrorException((error as Error).message);
+        if (refreshToken !== 'null') {
+            await this.redisClient.set(
+                `refreshToken:${id}`,
+                refreshToken,
+                'EX',
+                7 * 24 * 60 * 60,
+            ); // 7 days expiration
+        } else {
+            await this.redisClient.del(`refreshToken:${id}`);
         }
     }
 
@@ -270,22 +268,15 @@ export class UsersRepository {
     }
 
     async findOneByRefreshToken(refreshToken: string): Promise<User> {
-        try {
-            const project = await this.userModel.findOne<User>({
-                where: { refreshToken },
-            });
-            return project.dataValues as User;
-        } catch (error: any) {
-            throw new InternalServerErrorException((error as Error).message);
+        const id = await this.redisClient.get(`refreshToken:${refreshToken}`);
+        if (!id) {
+            throw new NotFoundException('Refresh token not found');
         }
+        return this.findOneById(id);
     }
 
     async deleteByRefreshToken(refreshToken: string): Promise<void> {
-        try {
-            await this.userModel.destroy({ where: { refreshToken } });
-        } catch (error) {
-            throw new InternalServerErrorException((error as Error).message);
-        }
+        await this.redisClient.del(`refreshToken:${refreshToken}`);
     }
 
     async findOneByOtp(email: string, otp: string): Promise<User> {

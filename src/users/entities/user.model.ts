@@ -56,12 +56,6 @@ export class User extends Model {
     birthdate: string;
 
     @Column({
-        type: DataTypes.STRING(500),
-        field: 'refresh_token',
-    })
-    refreshToken: string;
-
-    @Column({
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
     })
