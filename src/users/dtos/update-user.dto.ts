@@ -11,43 +11,39 @@ import { CreateEmployeeDto } from './create-user.dto';
 export class UpdateProfileDto {
     @ApiProperty()
     @IsString()
-    email: string;
+    username?: string;
 
     @ApiProperty()
     @IsString()
-    username: string;
+    email?: string;
+
+    @ApiProperty()
+    @IsPhoneNumber('VN')
+    phone?: string;
 
     @ApiProperty()
     @IsString()
-    id: string;
+    address?: string;
 
-    @ApiProperty()
-    @IsString()
-    phoneNumber: string;
-
-    @ApiProperty()
-    @IsString()
-    address: string;
-
-    @ApiProperty()
-    @IsString()
-    image: string;
-
-    @ApiProperty()
-    @IsNumber()
-    salary: number;
-
-    @ApiProperty()
+    @ApiProperty({ required: false })
+    @IsOptional()
     @IsDateString()
-    birthdate: string;
+    birthdate?: string;
 
-    @ApiProperty()
-    @IsString()
-    workStart: string;
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsNumber()
+    salary?: number;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
+    @IsOptional()
     @IsString()
-    workEnd: string;
+    workStart?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    workEnd?: string;
 }
 
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
