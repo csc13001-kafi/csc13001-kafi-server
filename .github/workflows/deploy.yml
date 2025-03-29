@@ -33,13 +33,12 @@ jobs:
                   tags: |
                       ${{ secrets.DOCKERHUB_USERNAME }}/kafi-server:latest
                       ${{ secrets.DOCKERHUB_USERNAME }}/kafi-server:${{ github.sha }}
+
     deploy:
+        needs: docker
         runs-on: ubuntu-latest
 
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-
             - name: Deploy to Render
               env:
                   RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -48,40 +47,3 @@ jobs:
                   curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
                   -H "accept: application/json" \
                   -H "authorization: Bearer $RENDER_API_KEY"
-services:
-    - type: web
-      name: kafi-server
-      env: docker
-      region: singapore
-      plan: starter
-      branch: main
-      dockerfilePath: ./Dockerfile
-      numInstances: 1
-      healthCheckPath: /
-      envVars:
-          - key: NODE_ENV
-            value: production
-          - key: DATABASE
-            sync: false # External PostgreSQL host
-          - key: DB_PORT
-            sync: false
-          - key: DB_USERNAME
-            sync: false
-          - key: DB_PASSWORD
-            sync: false
-          - key: DB_NAME
-            sync: false
-          - key: REDIS_HOST
-            sync: false # External Redis host
-          - key: REDIS_PORT
-            sync: false
-          - key: REDIS_USER
-            sync: false
-          - key: REDIS_PASSWORD
-            sync: false
-          - key: AT_SECRET
-            sync: false
-          - key: RT_SECRET
-            sync: false
-          - key: SERVER_PORT
-            value: 8080
