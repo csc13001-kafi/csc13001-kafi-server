@@ -9,7 +9,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AccessTokenStrategy } from './strategies/at.strategy';
 import { RefreshTokenStrategy } from './strategies/rt.strategy';
 import { AccessControlService } from '../ac/ac.service';
-
+import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
 @Module({
     imports: [
         UsersModule,
@@ -23,6 +23,27 @@ import { AccessControlService } from '../ac/ac.service';
                 },
             }),
             inject: [ConfigService],
+        }),
+        RedisModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService): RedisModuleOptions => ({
+                type: 'single',
+                options: {
+                    host: configService.get<string>('REDIS_HOST'),
+                    port: Number(configService.get<string>('REDIS_PORT')),
+                    username: configService.get<string>('REDIS_USER'),
+                    password: configService.get<string>('REDIS_PASSWORD'),
+                    tls: {
+                        rejectUnauthorized: true,
+                    },
+                    retryStrategy: (times: number) => {
+                        const delay = Math.min(times * 50, 2000);
+                        return delay;
+                    },
+                    maxRetriesPerRequest: 5,
+                },
+            }),
         }),
     ],
     controllers: [AuthController],
