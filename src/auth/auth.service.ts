@@ -105,10 +105,17 @@ export class AuthService {
 
     public async getNewTokens(refreshToken: string): Promise<TokensDto> {
         try {
+            const decodedRT = this.jwtService.decode(refreshToken);
+            const id: string = decodedRT['id'];
             const RTRecord =
-                await this.usersRepository.findOneByRefreshToken(refreshToken);
+                await this.usersRepository.findOneByRefreshToken(id);
             if (!RTRecord) {
                 throw new UnauthorizedException('Invalid refresh token');
+            }
+            if (RTRecord !== refreshToken) {
+                throw new UnauthorizedException(
+                    'Your refresh token has been expired. Please log in again',
+                );
             }
 
             const payload = this.jwtService.verify<{

@@ -126,7 +126,7 @@ export class AuthController {
 
         res.send({
             accessToken,
-            message: 'Token has been refreshed successfully',
+            message: 'Access token has been refreshed successfully',
         });
     }
 

@@ -267,12 +267,12 @@ export class UsersRepository {
         }
     }
 
-    async findOneByRefreshToken(refreshToken: string): Promise<User> {
-        const id = await this.redisClient.get(`refreshToken:${refreshToken}`);
-        if (!id) {
+    async findOneByRefreshToken(userId: string): Promise<string> {
+        const token = await this.redisClient.get(`refreshToken:${userId}`);
+        if (!token) {
             throw new NotFoundException('Refresh token not found');
         }
-        return this.findOneById(id);
+        return token;
     }
 
     async deleteByRefreshToken(refreshToken: string): Promise<void> {
