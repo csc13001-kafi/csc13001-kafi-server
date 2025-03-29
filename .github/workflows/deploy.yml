@@ -2,7 +2,10 @@ name: Deploy to Render
 
 on:
     push:
-        branches: [dev, KAFI-3/KAFI-35]
+        branches:
+            - main
+            - dev
+            - KAFI-3/KAFI-35
     workflow_dispatch:
 
 jobs:
