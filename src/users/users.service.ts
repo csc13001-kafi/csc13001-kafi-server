@@ -76,7 +76,7 @@ export class UsersService {
         username: string;
         id: string;
         role: string;
-        phoneNumber: string;
+        phone: string;
         address: string;
         image: string;
         salary: number;
@@ -95,7 +95,7 @@ export class UsersService {
                 username: user.username,
                 id: user.id,
                 role: user.role,
-                phoneNumber: user.phone,
+                phone: user.phone,
                 address: user.address,
                 image: user.profileImage,
                 salary: user.salary,
