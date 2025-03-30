@@ -85,7 +85,7 @@ export class UsersController {
             username: string;
             id: string;
             role: string;
-            phoneNumber: string;
+            phone: string;
             address: string;
             image: string;
             salary: number;
