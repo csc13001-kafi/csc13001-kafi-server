@@ -9,19 +9,19 @@ import {
 import { CreateEmployeeDto } from './create-user.dto';
 
 export class UpdateProfileDto {
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @IsString()
     username?: string;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @IsString()
     email?: string;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @IsPhoneNumber('VN')
     phone?: string;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @IsString()
     address?: string;
 
@@ -34,6 +34,11 @@ export class UpdateProfileDto {
     @IsOptional()
     @IsNumber()
     salary?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    image?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
