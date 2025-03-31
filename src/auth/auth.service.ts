@@ -152,6 +152,10 @@ export class AuthService {
                 payload.email,
             );
 
+            if (!user) {
+                throw new UnauthorizedException('User not found');
+            }
+
             const payloadAccessToken = {
                 id: payload.id,
                 username: user.username,
