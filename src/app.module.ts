@@ -31,7 +31,7 @@ import { OrdersModule } from './orders/orders.module';
                     },
                 },
                 defaults: {
-                    from: `"Kafi - POS System" <support@kafi>`, // Sender's email address
+                    from: `"Kafi - POS System" <support@kafi.com>`, // Sender's email address
                 },
             }),
             inject: [ConfigService],
