@@ -87,6 +87,11 @@ export class AuthService {
     }
 
     public async signUp(user: UserSignUpDto): Promise<Partial<User>> {
+        const foundUser = await this.usersRepository.findOneByEmail(user.email);
+        if (foundUser) {
+            throw new BadRequestException('User already exists');
+        }
+
         try {
             const newUser = await this.usersRepository.createCustomer(user);
             const formattedUser: {
