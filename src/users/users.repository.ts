@@ -99,8 +99,7 @@ export class UsersRepository {
     }
 
     async createCustomer(CreateDto: UserSignUpDto): Promise<User> {
-        const { username, email, password, phone, address, birthdate } =
-            CreateDto;
+        const { username, email, password, phone } = CreateDto;
         const hashedPassword = await this.hashPassword(password);
 
         const user = await this.userModel.create({
@@ -108,8 +107,8 @@ export class UsersRepository {
             username: username,
             email: email,
             phone: phone,
-            address: address,
-            birthdate: birthdate,
+            address: 'null',
+            birthdate: new Date('1990-01-01'),
             password: hashedPassword,
             otp: null,
             otpExpiry: null,

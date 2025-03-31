@@ -86,10 +86,27 @@ export class AuthService {
         }
     }
 
-    public async signUp(user: UserSignUpDto): Promise<User> {
+    public async signUp(user: UserSignUpDto): Promise<Partial<User>> {
         try {
             const newUser = await this.usersRepository.createCustomer(user);
-            return newUser;
+            const formattedUser: {
+                id: string;
+                profileImage: string;
+                username: string;
+                email: string;
+                phone: string;
+                role: Role;
+                loyaltyPoints: number;
+            } = {
+                id: newUser.id,
+                profileImage: newUser.profileImage,
+                username: newUser.username,
+                email: newUser.email,
+                phone: newUser.phone,
+                role: newUser.role,
+                loyaltyPoints: newUser.loyaltyPoints,
+            };
+            return formattedUser;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
