@@ -81,6 +81,8 @@ export class UsersService {
         image: string;
         salary: number;
         birthdate: string;
+        workStart: string;
+        workEnd: string;
     }> {
         try {
             const { id } = profileUser;
@@ -100,6 +102,8 @@ export class UsersService {
                 image: user.profileImage,
                 salary: user.salary,
                 birthdate: user.birthdate,
+                workStart: user.workStart,
+                workEnd: user.workEnd,
             };
             return newUser;
         } catch (error) {

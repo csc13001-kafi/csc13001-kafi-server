@@ -90,6 +90,8 @@ export class UsersController {
             image: string;
             salary: number;
             birthdate: string;
+            workStart: string;
+            workEnd: string;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
     }
