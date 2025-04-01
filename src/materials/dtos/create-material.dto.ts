@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 
 export class CreateMaterialDto {
     @ApiProperty()
@@ -15,7 +15,7 @@ export class CreateMaterialDto {
     unit: string;
 
     @ApiProperty()
-    @IsDateString()
+    @IsDate()
     expiredDate: Date;
 
     @ApiProperty()
