@@ -59,13 +59,15 @@ async function bootstrap() {
         new ValidationPipe({
             whitelist: true,
             forbidNonWhitelisted: true,
+            transform: true,
+            transformOptions: {
+                enableImplicitConversion: true,
+            },
         }),
     );
 
     const configService = app.get(ConfigService);
     const port = configService.get('SERVER_PORT');
-    //const userService = app.get(UsersService);
-    //await userService.createDefaultAdmin();
 
     app.use(json());
     app.use(urlencoded({ extended: true }));

@@ -5,30 +5,73 @@ import {
 } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { User } from './entities/user.model';
-
+import { CreateEmployeeDto } from './dtos/create-user.dto';
+import { Role } from '../auth/enums/roles.enum';
+import { UpdateEmployeeDto, UpdateProfileDto } from './dtos/update-user.dto';
+import type { Multer } from 'multer';
+import { UploadService } from '../uploader/upload.service';
 @Injectable()
 export class UsersService {
-    constructor(private readonly usersRepository: UsersRepository) {}
+    constructor(
+        private readonly usersRepository: UsersRepository,
+        private readonly uploadService: UploadService,
+    ) {}
 
-    async getAllProfiles(): Promise<
-        { email: string; username: string; id: string; role: string }[]
+    async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<User> {
+        return this.usersRepository.createEmployee(createEmployeeDto);
+    }
+
+    async updateProfile(
+        id: string,
+        updateProfileDto: Partial<UpdateProfileDto>,
+    ): Promise<User> {
+        return this.usersRepository.updateProfile(id, updateProfileDto);
+    }
+
+    async updateEmployee(
+        id: string,
+        updateEmployeeDto: Partial<UpdateEmployeeDto>,
+    ): Promise<User> {
+        return this.usersRepository.updateEmployee(id, updateEmployeeDto);
+    }
+
+    async deleteEmployee(id: string): Promise<{ message: string }> {
+        return this.usersRepository.deleteEmployee(id);
+    }
+
+    async getProfiles(role?: Role): Promise<
+        {
+            email: string;
+            username: string;
+            id: string;
+            role: string;
+            phone: string;
+            address: string;
+            birthdate: string;
+            salary: number;
+            image: string;
+            workStart: string;
+            workEnd: string;
+        }[]
     > {
         try {
-            const users = await this.usersRepository.findAll();
-            const newUsers = users.map((user) => {
-                return {
-                    email: user.email,
-                    username: user.username,
-                    id: user.id,
-                    role: user.role,
-                };
-            });
-            return newUsers;
-        } catch (error) {
-            throw new InternalServerErrorException(
-                'Error getting all profiles',
-                error.message,
-            );
+            const users = await this.usersRepository.findAllByRole(role);
+
+            return users.map((user) => ({
+                email: user.email,
+                username: user.username,
+                id: user.id,
+                role: user.role,
+                phone: user.phone,
+                address: user.address,
+                birthdate: user.birthdate,
+                salary: user.salary,
+                image: user.profileImage,
+                workStart: user.workStart,
+                workEnd: user.workEnd,
+            }));
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
         }
     }
 
@@ -37,6 +80,13 @@ export class UsersService {
         username: string;
         id: string;
         role: string;
+        phone: string;
+        address: string;
+        image: string;
+        salary: number;
+        birthdate: string;
+        workStart: string;
+        workEnd: string;
     }> {
         try {
             const { id } = profileUser;
@@ -51,6 +101,13 @@ export class UsersService {
                 username: user.username,
                 id: user.id,
                 role: user.role,
+                phone: user.phone,
+                address: user.address,
+                image: user.profileImage,
+                salary: user.salary,
+                birthdate: user.birthdate,
+                workStart: user.workStart,
+                workEnd: user.workEnd,
             };
             return newUser;
         } catch (error) {
@@ -59,5 +116,23 @@ export class UsersService {
                 error.message,
             );
         }
+    }
+
+    async updateProfileImage(
+        userId: string,
+        file: Multer.File,
+    ): Promise<{ message: string; user: Partial<User> }> {
+        const imageUrl = await this.uploadService.uploadFile(file, 'users');
+        await this.usersRepository.updateProfileImage(userId, imageUrl);
+        const user = await this.usersRepository.findOneById(userId);
+        const newUser = {
+            id: user.id,
+            username: user.username,
+            profileImage: user.profileImage,
+        };
+        return {
+            message: 'Profile image uploaded successfully',
+            user: newUser,
+        };
     }
 }

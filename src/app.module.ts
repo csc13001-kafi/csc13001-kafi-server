@@ -8,6 +8,11 @@ import pg from 'pg';
 import { User } from './users/entities/user.model';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from './auth/auth.module';
+import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
+import { MaterialsModule } from './materials/materials.module';
+import { UploadModule } from './uploader/upload.module';
+import { OrdersModule } from './orders/orders.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -26,7 +31,7 @@ import { AuthModule } from './auth/auth.module';
                     },
                 },
                 defaults: {
-                    from: `"Kafi - POS System" <support@kafi>`, // Sender's email address
+                    from: `"Kafi - POS System" <support@kafi.com>`, // Sender's email address
                 },
             }),
             inject: [ConfigService],
@@ -58,6 +63,11 @@ import { AuthModule } from './auth/auth.module';
         }),
         AuthModule,
         UsersModule,
+        ProductsModule,
+        CategoriesModule,
+        MaterialsModule,
+        UploadModule,
+        OrdersModule,
     ],
     controllers: [AppController],
     providers: [AppService],

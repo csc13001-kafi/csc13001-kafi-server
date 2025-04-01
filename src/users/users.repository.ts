@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './entities/user.model';
 import bcrypt from 'bcrypt';
@@ -6,11 +6,20 @@ import { ConfigService } from '@nestjs/config';
 import { InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { UserSignUpDto } from '../auth/dtos/user-signup.dto';
+import { Role } from '../auth/enums/roles.enum';
+import { CreateEmployeeDto } from './dtos/create-user.dto';
+import { UpdateProfileDto } from './dtos/update-user.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+
 @Injectable()
 export class UsersRepository {
     constructor(
         @InjectModel(User) private readonly userModel: typeof User,
         private readonly configService: ConfigService,
+        private readonly mailerService: MailerService,
+        @InjectRedis() private readonly redisClient: Redis,
     ) {}
 
     async validatePassword(password: string, user: User): Promise<boolean> {
@@ -35,31 +44,91 @@ export class UsersRepository {
         }
     }
 
-    async create(CreateDto: UserSignUpDto, role: string): Promise<User> {
-        const { username, email, password } = CreateDto;
+    async findOneByPhoneNumber(phoneNumber: string): Promise<User> {
+        const user = await this.userModel.findOne<User>({
+            where: { phone: phoneNumber },
+        });
+        return user.dataValues as User;
+    }
+
+    async createEmployee(CreateDto: CreateEmployeeDto): Promise<User> {
+        const {
+            username,
+            email,
+            phone,
+            address,
+            birthdate,
+            salary,
+            workStart,
+            workEnd,
+        } = CreateDto;
+
+        const password =
+            this.configService.get('DEFAULT_EMPLOYEE_PASSWORD') ||
+            this.generateRandomPassword();
+
+        await this.mailerService.sendMail({
+            to: email,
+            subject: '[Kafi - POS System] Welcome you to Kafi',
+            text: `Welcome you to onboard. As your account is created, your password is: ${password} \n After logging in our Kafi POS System, please change your password to a more secure one. \n Please do not reply this message.`,
+        });
         const hashedPassword = await this.hashPassword(password);
 
         const user = await this.userModel.create({
             id: uuidv4(),
             username: username,
             email: email,
+            phone: phone,
+            address: address,
+            birthdate: birthdate,
+            salary: salary,
             password: hashedPassword,
             otp: null,
             otpExpiry: null,
-            role: role,
+            role: Role.EMPLOYEE,
+            workStart: workStart,
+            workEnd: workEnd,
         });
+
         if (!user) {
             throw new InternalServerErrorException(
-                'This email or username is already in use',
+                'Error occurs when creating employee',
             );
         }
         return user;
     }
 
-    async findAll(): Promise<User[]> {
+    async createCustomer(CreateDto: UserSignUpDto): Promise<User> {
+        const { username, email, password, phone } = CreateDto;
+        const hashedPassword = await this.hashPassword(password);
+
+        const user = await this.userModel.create({
+            id: uuidv4(),
+            username: username,
+            email: email,
+            phone: phone,
+            address: 'null',
+            birthdate: new Date('1990-01-01'),
+            password: hashedPassword,
+            otp: null,
+            otpExpiry: null,
+            loyaltyPoints: 0,
+            role: Role.GUEST,
+        });
+        if (!user) {
+            throw new InternalServerErrorException(
+                'Error occurs when creating customer',
+            );
+        }
+        return user;
+    }
+
+    async findAllByRole(role: Role): Promise<User[]> {
         try {
-            const users = await this.userModel.findAll<User>();
-            return users.map((user) => user.dataValues as User);
+            const projects = await this.userModel.findAll<User>({
+                where: { role },
+            });
+            return projects.map((project) => project.dataValues) as User[];
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
@@ -70,6 +139,23 @@ export class UsersRepository {
             const project = await this.userModel.findOne<User>({
                 where: { email },
             });
+
+            if (!project) {
+                return null;
+            }
+
+            return project.dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async findOneByUsername(username: string): Promise<User> {
+        try {
+            const project = await this.userModel.findOne<User>({
+                where: { username },
+            });
+
             return project.dataValues as User;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
@@ -87,21 +173,71 @@ export class UsersRepository {
         }
     }
 
-    async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
+    async updateProfile(
+        id: string,
+        updateProfileDto: Partial<UpdateProfileDto>,
+    ): Promise<User> {
         try {
-            if (refreshToken === 'null') {
-                await this.userModel.update(
-                    { refreshToken: null },
-                    { where: { id: id } },
-                );
-            } else {
-                await this.userModel.update(
-                    { refreshToken: refreshToken },
-                    { where: { id: id } },
+            const [updatedCount, updatedUsers] = await this.userModel.update(
+                updateProfileDto,
+                { where: { id }, returning: true },
+            );
+
+            if (updatedCount === 0) {
+                throw new NotFoundException(
+                    `The session user with id ${id} not found`,
                 );
             }
-        } catch (error) {
+
+            return updatedUsers[0].dataValues as User;
+        } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async updateEmployee(
+        id: string,
+        updateEmployeeDto: Partial<CreateEmployeeDto>,
+    ): Promise<User> {
+        try {
+            const [updatedCount, updatedUsers] = await this.userModel.update(
+                updateEmployeeDto,
+                {
+                    where: { id },
+                    returning: true,
+                },
+            );
+
+            if (updatedCount === 0) {
+                throw new NotFoundException(`Employee with id ${id} not found`);
+            }
+
+            return updatedUsers[0].dataValues as User;
+        } catch (error: any) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async deleteEmployee(id: string): Promise<{ message: string }> {
+        const employee = await this.userModel.findByPk(id);
+        if (!employee) {
+            throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+
+        await employee.destroy();
+        return { message: 'Employee deleted successfully' };
+    }
+
+    async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
+        if (refreshToken !== 'null') {
+            await this.redisClient.set(
+                `refreshToken:${id}`,
+                refreshToken,
+                'EX',
+                7 * 24 * 60 * 60,
+            ); // 7 days expiration
+        } else {
+            await this.redisClient.del(`refreshToken:${id}`);
         }
     }
 
@@ -131,23 +267,16 @@ export class UsersRepository {
         }
     }
 
-    async findOneByRefreshToken(refreshToken: string): Promise<User> {
-        try {
-            const project = await this.userModel.findOne<User>({
-                where: { refreshToken },
-            });
-            return project.dataValues as User;
-        } catch (error: any) {
-            throw new InternalServerErrorException((error as Error).message);
+    async findOneByRefreshToken(userId: string): Promise<string> {
+        const token = await this.redisClient.get(`refreshToken:${userId}`);
+        if (!token) {
+            throw new NotFoundException('Refresh token not found');
         }
+        return token;
     }
 
     async deleteByRefreshToken(refreshToken: string): Promise<void> {
-        try {
-            await this.userModel.destroy({ where: { refreshToken } });
-        } catch (error) {
-            throw new InternalServerErrorException((error as Error).message);
-        }
+        await this.redisClient.del(`refreshToken:${refreshToken}`);
     }
 
     async findOneByOtp(email: string, otp: string): Promise<User> {
@@ -171,5 +300,21 @@ export class UsersRepository {
             );
         }
         return project.dataValues as User;
+    }
+
+    async updateProfileImage(id: string, imageUrl: string): Promise<void> {
+        try {
+            await this.userModel.update(
+                { profileImage: imageUrl },
+                { where: { id } },
+            );
+        } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    private generateRandomPassword(): string {
+        // Generate a random 6-digit number
+        return Math.floor(100000 + Math.random() * 900000).toString();
     }
 }

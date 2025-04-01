@@ -24,13 +24,15 @@ export class AuthService {
         private readonly mailerService: MailerService,
     ) {}
 
-    public async validateUser(email: string, password: string): Promise<User> {
-        const user = await this.usersRepository.findOneByEmail(email);
+    public async validateUser(
+        username: string,
+        password: string,
+    ): Promise<User> {
+        const user = await this.usersRepository.findOneByEmail(username);
         if (!user) {
             return null;
         }
 
-        console.log(user);
         const isValidPassword: boolean =
             await this.usersRepository.validatePassword(password, user);
 
@@ -45,6 +47,7 @@ export class AuthService {
         try {
             const payloadAccessToken = {
                 id: user.id,
+                email: user.email,
                 username: user.username,
                 role: user.role,
             };
@@ -52,14 +55,13 @@ export class AuthService {
             const accessToken = await this.jwtService.signAsync(
                 payloadAccessToken,
                 {
-                    expiresIn: '15m',
+                    expiresIn: '1h',
                     secret: this.configService.get('AT_SECRET'),
                 },
             );
 
             const payloadRefreshToken = {
                 id: user.id,
-                username: user.username,
                 email: user.email,
                 role: user.role,
             };
@@ -72,7 +74,6 @@ export class AuthService {
                 },
             );
 
-            console.log(user);
             await this.usersRepository.updateRefreshToken(
                 user.id,
                 refreshToken,
@@ -85,10 +86,32 @@ export class AuthService {
         }
     }
 
-    public async signUp(user: UserSignUpDto): Promise<User> {
+    public async signUp(user: UserSignUpDto): Promise<Partial<User>> {
+        const foundUser = await this.usersRepository.findOneByEmail(user.email);
+        if (foundUser) {
+            throw new BadRequestException('User already exists');
+        }
+
         try {
-            const newUser = await this.usersRepository.create(user, Role.GUEST);
-            return newUser;
+            const newUser = await this.usersRepository.createCustomer(user);
+            const formattedUser: {
+                id: string;
+                profileImage: string;
+                username: string;
+                email: string;
+                phone: string;
+                role: Role;
+                loyaltyPoints: number;
+            } = {
+                id: newUser.id,
+                profileImage: newUser.profileImage,
+                username: newUser.username,
+                email: newUser.email,
+                phone: newUser.phone,
+                role: newUser.role,
+                loyaltyPoints: newUser.loyaltyPoints,
+            };
+            return formattedUser;
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }
@@ -104,28 +127,43 @@ export class AuthService {
 
     public async getNewTokens(refreshToken: string): Promise<TokensDto> {
         try {
+            const decodedRT = this.jwtService.decode(refreshToken);
+            const id: string = decodedRT['id'];
             const RTRecord =
-                await this.usersRepository.findOneByRefreshToken(refreshToken);
+                await this.usersRepository.findOneByRefreshToken(id);
             if (!RTRecord) {
                 throw new UnauthorizedException('Invalid refresh token');
+            }
+            if (RTRecord !== refreshToken) {
+                throw new UnauthorizedException(
+                    'Your refresh token has been expired. Please log in again',
+                );
             }
 
             const payload = this.jwtService.verify<{
                 id: string;
-                username: string;
+                email: string;
                 role: Role;
             }>(refreshToken, {
                 secret: this.configService.get('RT_SECRET'),
             });
 
+            const user = await this.usersRepository.findOneByEmail(
+                payload.email,
+            );
+
+            if (!user) {
+                throw new UnauthorizedException('User not found');
+            }
+
             const payloadAccessToken = {
                 id: payload.id,
-                username: payload.username,
+                username: user.username,
                 role: payload.role,
             };
 
             const newAT = await this.jwtService.signAsync(payloadAccessToken, {
-                expiresIn: '15m',
+                expiresIn: '1h',
                 secret: this.configService.get('AT_SECRET'),
             });
 
@@ -174,6 +212,39 @@ export class AuthService {
             }
 
             return;
+        } catch (error) {
+            throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async changePassword(
+        id: string,
+        oldPassword: string,
+        newPassword: string,
+        confirmPassword: string,
+    ): Promise<void> {
+        const user = await this.usersRepository.findOneById(id);
+        if (!user) throw new NotFoundException('User not found');
+        const isValidPassword = await this.usersRepository.validatePassword(
+            oldPassword,
+            user,
+        );
+
+        if (!isValidPassword) {
+            throw new BadRequestException('Invalid old password');
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new BadRequestException('Passwords do not match');
+        }
+
+        try {
+            const hashedPassword =
+                await this.usersRepository.hashPassword(newPassword);
+            await this.usersRepository.updatePassword(
+                user.email,
+                hashedPassword,
+            );
         } catch (error) {
             throw new InternalServerErrorException((error as Error).message);
         }
