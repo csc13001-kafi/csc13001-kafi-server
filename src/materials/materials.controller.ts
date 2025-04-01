@@ -30,7 +30,7 @@ export class MaterialsController {
         type: CreateMaterialDto,
     })
     @UseGuards(ATAuthGuard, RolesGuard)
-    @Roles(Role.MANAGER)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
     async create(@Body() createMaterialDto: CreateMaterialDto) {
         return this.materialsService.create(createMaterialDto);
     }
@@ -88,7 +88,7 @@ export class MaterialsController {
     })
     @Delete(':id')
     @UseGuards(ATAuthGuard, RolesGuard)
-    @Roles(Role.MANAGER)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
     async remove(@Param('id') id: string) {
         return this.materialsService.delete(id);
     }

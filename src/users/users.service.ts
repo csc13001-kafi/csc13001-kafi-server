@@ -50,6 +50,8 @@ export class UsersService {
             birthdate: string;
             salary: number;
             image: string;
+            workStart: string;
+            workEnd: string;
         }[]
     > {
         try {
@@ -65,6 +67,8 @@ export class UsersService {
                 birthdate: user.birthdate,
                 salary: user.salary,
                 image: user.profileImage,
+                workStart: user.workStart,
+                workEnd: user.workEnd,
             }));
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
