@@ -1,11 +1,11 @@
 import {
     Controller,
     Post,
-    Body,
     Request,
     UseGuards,
     Get,
     Param,
+    UseInterceptors,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
@@ -19,6 +19,8 @@ import {
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseFormData } from './decorators/parse-form-data.decorator';
 
 @Controller('orders')
 export class OrdersController {
@@ -27,6 +29,7 @@ export class OrdersController {
     @ApiOperation({ summary: 'Checkout an order [EMPLOYEE, MANAGER]' })
     @ApiBearerAuth('access-token')
     @Post('order')
+    @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         schema: {
@@ -34,13 +37,16 @@ export class OrdersController {
             properties: {
                 table: {
                     type: 'string',
+                    example: '1',
                 },
                 id: {
                     type: 'string',
+                    example: 'a07781d8-d471-4e80-b251-493beedafaae',
                 },
                 time: {
                     type: 'string',
                     format: 'date-time',
+                    example: '2024-04-07T15:30:00Z',
                 },
                 products: {
                     type: 'array',
@@ -56,9 +62,12 @@ export class OrdersController {
                 },
                 clientPhoneNumber: {
                     type: 'string',
+                    example: '0123456789',
                 },
                 paymentMethod: {
                     type: 'string',
+                    enum: ['Cash', 'QR'],
+                    example: 'QR',
                 },
             },
             required: [
@@ -80,7 +89,7 @@ export class OrdersController {
     @Roles(Role.EMPLOYEE, Role.MANAGER)
     async checkoutOrder(
         @Request() req: any,
-        @Body() createOrderDto: CreateOrderDto,
+        @ParseFormData(CreateOrderDto) createOrderDto: CreateOrderDto,
     ) {
         return this.ordersService.checkoutOrder(req.user.id, createOrderDto);
     }
@@ -101,5 +110,18 @@ export class OrdersController {
     @Roles(Role.MANAGER)
     async getOrderById(@Param('id') id: string) {
         return this.ordersService.getOrderById(id);
+    }
+
+    @ApiOperation({ summary: 'Check payment status [EMPLOYEE, MANAGER]' })
+    @ApiBearerAuth('access-token')
+    @Get('payment-status/:orderCode')
+    @UseGuards(ATAuthGuard)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
+    @ApiResponse({
+        status: 200,
+        description: 'Payment status retrieved successfully',
+    })
+    async checkPaymentStatus(@Param('orderCode') orderCode: string) {
+        return this.ordersService.checkPaymentStatus(orderCode);
     }
 }

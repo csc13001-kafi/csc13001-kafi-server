@@ -7,7 +7,7 @@ import {
 import { Order } from './entities/order.model';
 import { OrderDetails } from './entities/order_details.model';
 import { Product } from '../products/entities/product.model';
-
+import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class OrdersRepository {
     constructor(
@@ -59,15 +59,20 @@ export class OrdersRepository {
                 quantities &&
                 products.length === quantities.length
             ) {
-                const orderDetailsData = products.map(
-                    (product: Product, index: number) => ({
-                        id: id,
-                        productId: product.id,
-                        price: product.price,
-                        quantity: quantities[index],
-                    }),
+                const productIds = products.map(
+                    (product: Product) => product.dataValues.id,
                 );
-
+                const orderDetailsData = products.map(
+                    (product: Product, index: number) => {
+                        return {
+                            id: uuidv4(),
+                            orderId: id,
+                            productId: productIds[index],
+                            price: product.dataValues.price,
+                            quantity: quantities[index],
+                        };
+                    },
+                );
                 // Use bulkCreate to insert multiple records at once.
                 await this.orderDetailsModel.bulkCreate(orderDetailsData);
             }

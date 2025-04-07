@@ -13,12 +13,14 @@ import { CategoriesModule } from './categories/categories.module';
 import { MaterialsModule } from './materials/materials.module';
 import { UploadModule } from './uploader/upload.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentModule } from './payment/payment.module';
+import { HttpModule } from '@nestjs/axios';
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-
+        HttpModule,
         MailerModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({
@@ -68,6 +70,7 @@ import { OrdersModule } from './orders/orders.module';
         MaterialsModule,
         UploadModule,
         OrdersModule,
+        PaymentModule,
     ],
     controllers: [AppController],
     providers: [AppService],
