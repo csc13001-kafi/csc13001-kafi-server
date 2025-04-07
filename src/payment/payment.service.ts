@@ -21,8 +21,8 @@ export class PaymentService {
             console.log('Headers:', headers);
 
             // Extract relevant data
-            const orderCode = webhookData.orderCode;
-            const status = webhookData.status; // Expected values like 'SUCCEEDED', 'CANCELED', etc.
+            const orderCode: number = webhookData.data.orderCode;
+            const status: boolean = webhookData.success;
 
             // Log the webhook for debugging
             console.log(
@@ -30,22 +30,21 @@ export class PaymentService {
             );
 
             // Process the webhook based on status
-            if (status === 'SUCCEEDED') {
-                // Payment was successful - update the order
+            if (status === true) {
+                const { orderDetails, orderGeneralDto } =
+                    this.ordersService.orderCache.get(orderCode.toString());
                 await this.ordersService.completeOrder(
-                    orderCode,
-                    this.ordersService.orderCache.get(orderCode),
+                    orderDetails,
+                    orderGeneralDto,
                 );
                 console.log(`Order ${orderCode} completed successfully`);
-            } else if (status === 'CANCELED' || status === 'FAILED') {
+            } else if (status === false) {
                 // Payment failed or was canceled
                 throw new Error('Payment failed or was canceled');
             }
-            // Always return success to acknowledge receipt
             return { success: true };
         } catch (error) {
             console.error('Error processing webhook:', error);
-            // Still return 200 to prevent retries
             return { success: false, error: error.message };
         }
     }
