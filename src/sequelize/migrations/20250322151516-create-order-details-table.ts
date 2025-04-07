@@ -13,22 +13,10 @@ export = {
             orderId: {
                 type: DataTypes.UUID,
                 allowNull: false,
-                references: {
-                    model: 'orders',
-                    key: 'id',
-                },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
             },
             productId: {
                 type: DataTypes.UUID,
                 allowNull: false,
-                references: {
-                    model: 'products',
-                    key: 'id',
-                },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
             },
             price: {
                 type: DataTypes.INTEGER,

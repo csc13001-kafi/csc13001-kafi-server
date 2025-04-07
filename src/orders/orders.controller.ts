@@ -37,11 +37,11 @@ export class OrdersController {
             properties: {
                 table: {
                     type: 'string',
-                    example: 'Table 1',
+                    example: '1',
                 },
                 id: {
                     type: 'string',
-                    example: 'order123',
+                    example: 'a07781d8-d471-4e80-b251-493beedafaae',
                 },
                 time: {
                     type: 'string',
@@ -49,14 +49,16 @@ export class OrdersController {
                     example: '2024-04-07T15:30:00Z',
                 },
                 products: {
-                    type: 'string',
-                    description: 'Comma-separated product IDs',
-                    example: 'product1,product2,product3',
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                    },
                 },
                 quantities: {
-                    type: 'string',
-                    description: 'Comma-separated quantities',
-                    example: '1,2,3',
+                    type: 'array',
+                    items: {
+                        type: 'number',
+                    },
                 },
                 clientPhoneNumber: {
                     type: 'string',
@@ -108,5 +110,18 @@ export class OrdersController {
     @Roles(Role.MANAGER)
     async getOrderById(@Param('id') id: string) {
         return this.ordersService.getOrderById(id);
+    }
+
+    @ApiOperation({ summary: 'Check payment status [EMPLOYEE, MANAGER]' })
+    @ApiBearerAuth('access-token')
+    @Get('payment-status/:orderCode')
+    @UseGuards(ATAuthGuard)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
+    @ApiResponse({
+        status: 200,
+        description: 'Payment status retrieved successfully',
+    })
+    async checkPaymentStatus(@Param('orderCode') orderCode: string) {
+        return this.ordersService.checkPaymentStatus(orderCode);
     }
 }
