@@ -256,14 +256,6 @@ export class OrdersService {
         }
     }
 
-    private findCachedOrderData(orderCode: string | number): any {
-        const key = orderCode.toString();
-        if (this.orderCache.has(key)) {
-            return this.orderCache.get(key);
-        }
-        return null;
-    }
-
     private cacheOrderData(orderCode: string, orderData: any) {
         this.orderCache.set(orderCode, orderData);
     }

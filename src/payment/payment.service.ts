@@ -1,5 +1,4 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { OrdersService } from 'src/orders/orders.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -10,7 +9,6 @@ export class PaymentService {
     constructor(
         @Inject(forwardRef(() => OrdersService))
         private readonly ordersService: OrdersService,
-        private readonly configService: ConfigService,
         private readonly httpService: HttpService,
         private readonly payosService: PayOSService,
     ) {}
@@ -20,16 +18,16 @@ export class PaymentService {
             console.log('Received PayOS webhook:', webhookData);
             console.log('Headers:', headers);
 
-            // Extract relevant data
             const orderCode: number = webhookData.data.orderCode;
+            if (!orderCode) {
+                throw new Error('Order code not found');
+            }
             const status: boolean = webhookData.success;
 
-            // Log the webhook for debugging
             console.log(
                 `Payment status for order ${orderCode} is now: ${status}`,
             );
 
-            // Process the webhook based on status
             if (status === true) {
                 const { orderDetails, orderGeneralDto } =
                     this.ordersService.orderCache.get(orderCode.toString());
