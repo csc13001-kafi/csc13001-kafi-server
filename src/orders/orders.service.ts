@@ -1,9 +1,15 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { ProductsRepository } from '../products/products.repository';
 import { UsersRepository } from '../users/users.repository';
 import { OrdersRepository } from './orders.repository';
 import { Product } from 'src/products/entities/product.model';
+import { PayOSService } from '../payment/payos.service';
+import { PaymentMethod } from './enums/payment-method.enum';
 
 @Injectable()
 export class OrdersService {
@@ -11,6 +17,7 @@ export class OrdersService {
         private readonly ordersRepository: OrdersRepository,
         private readonly productsRepository: ProductsRepository,
         private readonly usersRepository: UsersRepository,
+        private readonly payosService: PayOSService,
     ) {}
 
     calculateDiscount(
@@ -47,47 +54,100 @@ export class OrdersService {
     }
 
     async checkoutOrder(employeeId: string, orderDto: CreateOrderDto) {
-        try {
-            const numberOfProducts = orderDto.products.length;
-            let totalPrice = 0;
-            for (let i = 0; i < numberOfProducts; i++) {
-                const product = await this.productsRepository.findById(
-                    orderDto.products[i],
-                );
-                totalPrice =
-                    totalPrice + product.price * orderDto.quantities[i];
-            }
-            const client = await this.usersRepository.findOneByPhoneNumber(
-                orderDto.clientPhoneNumber,
+        const numberOfProducts = orderDto.products.length;
+        let totalPrice = 0;
+        for (let i = 0; i < numberOfProducts; i++) {
+            const product = await this.productsRepository.findById(
+                orderDto.products[i],
             );
+            totalPrice = totalPrice + product.price * orderDto.quantities[i];
+        }
+
+        const client = await this.usersRepository.findOneByPhoneNumber(
+            orderDto.clientPhoneNumber,
+        );
+
+        if (!client) {
+            throw new BadRequestException('Client not found');
+        }
+
+        try {
             const employee = await this.usersRepository.findOneById(employeeId);
             const loyaltyPoints = client.loyaltyPoints;
             const { afterDiscountPrice, discountPercentage } =
                 this.calculateDiscount(loyaltyPoints, totalPrice);
             const discount = totalPrice - afterDiscountPrice;
-            const orderDetails = {
-                numberOfProducts: numberOfProducts,
-                totalPrice: totalPrice,
-                discountPercentage: discountPercentage,
-                discount: discount,
-                afterDiscountPrice: afterDiscountPrice,
-                employeeName: employee.username,
-            };
 
-            const products: Product[] = await Promise.all(
-                orderDto.products.map(async (productId) =>
-                    this.productsRepository.findById(productId),
-                ),
-            );
-            const orderGeneralDto = {
-                ...orderDto,
-                products: products,
-            };
-            const order = await this.ordersRepository.create(
-                orderGeneralDto,
-                orderDetails,
-            );
-            return order;
+            if (orderDto.paymentMethod === PaymentMethod.QR) {
+                const orderCode = `KAFI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const paymentLink = await this.payosService.createPaymentLink({
+                    orderCode,
+                    amount: Math.round(afterDiscountPrice), // PayOS expects amount in VND with no decimals
+                    description: `Payment for order ${orderCode}`,
+                    cancelUrl: `${process.env.FRONTEND_URL}/orders/cancel`,
+                    returnUrl: `${process.env.FRONTEND_URL}/orders/success`,
+                });
+
+                const orderDetails = {
+                    numberOfProducts,
+                    totalPrice,
+                    discountPercentage,
+                    discount,
+                    afterDiscountPrice,
+                    employeeName: employee.username,
+                    paymentStatus: 'PENDING',
+                    paymentLink: paymentLink.checkoutUrl,
+                    orderCode,
+                };
+
+                const products: Product[] = await Promise.all(
+                    orderDto.products.map(async (productId) =>
+                        this.productsRepository.findById(productId),
+                    ),
+                );
+
+                const orderGeneralDto = {
+                    ...orderDto,
+                    products: products,
+                };
+
+                const order = await this.ordersRepository.create(
+                    orderGeneralDto,
+                    orderDetails,
+                );
+
+                return {
+                    ...order,
+                    paymentLink: paymentLink.checkoutUrl,
+                };
+            } else {
+                const orderDetails = {
+                    numberOfProducts,
+                    totalPrice,
+                    discountPercentage,
+                    discount,
+                    afterDiscountPrice,
+                    employeeName: employee.username,
+                };
+
+                const products: Product[] = await Promise.all(
+                    orderDto.products.map(async (productId) =>
+                        this.productsRepository.findById(productId),
+                    ),
+                );
+
+                const orderGeneralDto = {
+                    ...orderDto,
+                    products: products,
+                };
+
+                const order = await this.ordersRepository.create(
+                    orderGeneralDto,
+                    orderDetails,
+                );
+
+                return order;
+            }
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
         }

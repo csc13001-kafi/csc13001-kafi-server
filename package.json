@@ -38,6 +38,7 @@
         "@nesjs/core": "^1.0.0",
         "@nestjs-modules/ioredis": "^2.0.2",
         "@nestjs-modules/mailer": "^2.0.2",
+        "@nestjs/axios": "^4.0.0",
         "@nestjs/common": "^11.0.11",
         "@nestjs/config": "^4.0.1",
         "@nestjs/core": "^11.0.1",

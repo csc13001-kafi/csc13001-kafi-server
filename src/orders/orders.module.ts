@@ -7,12 +7,13 @@ import { OrderDetails } from './entities/order_details.model';
 import { OrdersController } from './orders.controller';
 import { ProductsModule } from 'src/products/products.module';
 import { UsersModule } from 'src/users/users.module';
-
+import { PaymentModule } from 'src/payment/payment.module';
 @Module({
     imports: [
         SequelizeModule.forFeature([Order, OrderDetails]),
         ProductsModule,
         UsersModule,
+        PaymentModule,
     ],
     controllers: [OrdersController],
     providers: [OrdersService, OrdersRepository],

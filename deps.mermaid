@@ -38,6 +38,11 @@ graph LR
   ConfigModule-->MailerCoreModule
   ConfigModule-->RedisCoreModule
   ConfigModule-->SequelizeCoreModule
+  HttpModule-->ConfigHostModule
+  HttpModule-->ConfigModule
+  HttpModule-->MailerCoreModule
+  HttpModule-->RedisCoreModule
+  HttpModule-->SequelizeCoreModule
   JwtModule-->ConfigHostModule
   JwtModule-->ConfigModule
   JwtModule-->MailerCoreModule
@@ -66,6 +71,7 @@ graph LR
   OrdersModule-->ConfigHostModule
   OrdersModule-->ConfigModule
   OrdersModule-->MailerCoreModule
+  OrdersModule-->PaymentModule
   OrdersModule-->ProductsModule
   OrdersModule-->RedisCoreModule
   OrdersModule-->SequelizeCoreModule
@@ -76,6 +82,12 @@ graph LR
   PassportModule-->MailerCoreModule
   PassportModule-->RedisCoreModule
   PassportModule-->SequelizeCoreModule
+  PaymentModule-->ConfigHostModule
+  PaymentModule-->ConfigModule
+  PaymentModule-->HttpModule
+  PaymentModule-->MailerCoreModule
+  PaymentModule-->RedisCoreModule
+  PaymentModule-->SequelizeCoreModule
   ProductsModule-->ConfigHostModule
   ProductsModule-->ConfigModule
   ProductsModule-->MailerCoreModule

@@ -6,7 +6,9 @@ import {
     IsNumber,
     IsEnum,
     IsDateString,
+    ArrayMinSize,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { Product } from '../../products/entities/product.model';
 
@@ -31,24 +33,38 @@ export class CreateOrderDto {
         description: 'Order timestamp (ISO string)',
         example: '2023-04-24T10:30:00Z',
     })
-    @IsDateString()
+    @IsString()
     @IsNotEmpty()
-    time: Date;
+    time: string;
 
     @ApiProperty({
         description: 'Array of chosen product IDs',
         example: ['prod-1', 'prod-2'],
     })
+    @Transform(({ value }) => {
+        if (typeof value === 'string') {
+            return value.split(',');
+        }
+        return value;
+    })
     @IsArray()
     @IsString({ each: true })
+    @ArrayMinSize(1)
     products: string[];
 
     @ApiProperty({
         description: 'Array of quantities corresponding to each product',
         example: [1, 3],
     })
+    @Transform(({ value }) => {
+        if (typeof value === 'string') {
+            return value.split(',').map(Number);
+        }
+        return value;
+    })
     @IsArray()
     @IsNumber({}, { each: true })
+    @ArrayMinSize(1)
     quantities: number[];
 
     @ApiProperty({
@@ -63,9 +79,8 @@ export class CreateOrderDto {
         description: 'Payment method',
         example: 'cash',
     })
-    @IsString()
-    @IsNotEmpty()
     @IsEnum(PaymentMethod)
+    @IsNotEmpty()
     paymentMethod: PaymentMethod;
 }
 
@@ -92,7 +107,7 @@ export class CreateOrderGeneralDto {
     })
     @IsDateString()
     @IsNotEmpty()
-    time: Date;
+    time: string;
 
     @ApiProperty({
         description: 'Array of chosen product IDs',

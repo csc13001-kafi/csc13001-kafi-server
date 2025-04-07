@@ -1,11 +1,11 @@
 import {
     Controller,
     Post,
-    Body,
     Request,
     UseGuards,
     Get,
     Param,
+    UseInterceptors,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
@@ -19,6 +19,8 @@ import {
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseFormData } from './decorators/parse-form-data.decorator';
 
 @Controller('orders')
 export class OrdersController {
@@ -27,6 +29,7 @@ export class OrdersController {
     @ApiOperation({ summary: 'Checkout an order [EMPLOYEE, MANAGER]' })
     @ApiBearerAuth('access-token')
     @Post('order')
+    @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         schema: {
@@ -34,31 +37,35 @@ export class OrdersController {
             properties: {
                 table: {
                     type: 'string',
+                    example: 'Table 1',
                 },
                 id: {
                     type: 'string',
+                    example: 'order123',
                 },
                 time: {
                     type: 'string',
                     format: 'date-time',
+                    example: '2024-04-07T15:30:00Z',
                 },
                 products: {
-                    type: 'array',
-                    items: {
-                        type: 'string',
-                    },
+                    type: 'string',
+                    description: 'Comma-separated product IDs',
+                    example: 'product1,product2,product3',
                 },
                 quantities: {
-                    type: 'array',
-                    items: {
-                        type: 'number',
-                    },
+                    type: 'string',
+                    description: 'Comma-separated quantities',
+                    example: '1,2,3',
                 },
                 clientPhoneNumber: {
                     type: 'string',
+                    example: '0123456789',
                 },
                 paymentMethod: {
                     type: 'string',
+                    enum: ['Cash', 'QR'],
+                    example: 'QR',
                 },
             },
             required: [
@@ -80,7 +87,7 @@ export class OrdersController {
     @Roles(Role.EMPLOYEE, Role.MANAGER)
     async checkoutOrder(
         @Request() req: any,
-        @Body() createOrderDto: CreateOrderDto,
+        @ParseFormData(CreateOrderDto) createOrderDto: CreateOrderDto,
     ) {
         return this.ordersService.checkoutOrder(req.user.id, createOrderDto);
     }
