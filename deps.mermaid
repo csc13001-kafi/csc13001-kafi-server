@@ -3,10 +3,12 @@ graph LR
   AppModule-->CategoriesModule
   AppModule-->ConfigHostModule
   AppModule-->ConfigModule
+  AppModule-->HttpModule
   AppModule-->MailerCoreModule
   AppModule-->MailerModule
   AppModule-->MaterialsModule
   AppModule-->OrdersModule
+  AppModule-->PaymentModule
   AppModule-->ProductsModule
   AppModule-->RedisCoreModule
   AppModule-->SequelizeCoreModule
@@ -72,6 +74,7 @@ graph LR
   OrdersModule-->ConfigModule
   OrdersModule-->MailerCoreModule
   OrdersModule-->PaymentModule
+  OrdersModule-->PayosModule
   OrdersModule-->ProductsModule
   OrdersModule-->RedisCoreModule
   OrdersModule-->SequelizeCoreModule
@@ -86,8 +89,15 @@ graph LR
   PaymentModule-->ConfigModule
   PaymentModule-->HttpModule
   PaymentModule-->MailerCoreModule
+  PaymentModule-->OrdersModule
   PaymentModule-->RedisCoreModule
   PaymentModule-->SequelizeCoreModule
+  PayosModule-->ConfigHostModule
+  PayosModule-->ConfigModule
+  PayosModule-->HttpModule
+  PayosModule-->MailerCoreModule
+  PayosModule-->RedisCoreModule
+  PayosModule-->SequelizeCoreModule
   ProductsModule-->ConfigHostModule
   ProductsModule-->ConfigModule
   ProductsModule-->MailerCoreModule

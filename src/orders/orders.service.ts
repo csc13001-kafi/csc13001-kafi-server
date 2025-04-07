@@ -2,24 +2,29 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { ProductsRepository } from '../products/products.repository';
 import { UsersRepository } from '../users/users.repository';
 import { OrdersRepository } from './orders.repository';
 import { Product } from 'src/products/entities/product.model';
-import { PayOSService } from '../payment/payos.service';
+import { PayOSService } from '../payment/payos/payos.service';
 import { PaymentMethod } from './enums/payment-method.enum';
+import { PaymentService } from 'src/payment/payment.service';
 
 @Injectable()
 export class OrdersService {
-    private orderCache: Map<string, any> = new Map();
+    public orderCache: Map<string, any> = new Map();
 
     constructor(
         private readonly ordersRepository: OrdersRepository,
         private readonly productsRepository: ProductsRepository,
         private readonly usersRepository: UsersRepository,
         private readonly payosService: PayOSService,
+        @Inject(forwardRef(() => PaymentService))
+        private readonly paymentService: PaymentService,
     ) {}
 
     calculateDiscount(
@@ -223,39 +228,25 @@ export class OrdersService {
 
             console.log('Payment status:', paymentStatus);
 
-            // If payment is completed, create the order in the database
             if (paymentStatus.rawData.data.status == 'PAID') {
-                // Find if we have cached order data for this orderCode
-                const cachedOrderData = this.findCachedOrderData(orderCode);
-
-                if (cachedOrderData) {
-                    // Create the order in the database using cached data
-                    await this.completeOrder(
-                        cachedOrderData.orderDetails,
-                        cachedOrderData.orderGeneralDto,
-                    );
-
-                    return {
-                        ...paymentStatus,
-                        orderCreated: true,
-                        message: 'Payment successful and order created',
-                    };
-                } else {
-                    // Payment successful but we don't have order details cached
-                    return {
-                        ...paymentStatus,
-                        orderCreated: false,
-                        message:
-                            'Payment successful but order details not found. Please submit order details.',
-                    };
-                }
+                return {
+                    ...paymentStatus,
+                    orderCreated: true,
+                    message: 'Payment successful and order created',
+                };
+            } else if (paymentStatus.rawData.data.status == 'PENDING') {
+                return {
+                    ...paymentStatus,
+                    orderCreated: false,
+                    message: 'Payment not completed yet',
+                };
             }
 
-            // Payment is not completed yet, just return status
             return {
                 ...paymentStatus,
                 orderCreated: false,
-                message: 'Payment not completed yet',
+                message:
+                    'Payment successful but order details not found. Please submit order details.',
             };
         } catch (error) {
             console.error('Error checking payment status:', error);

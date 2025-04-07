@@ -5,10 +5,11 @@ import { firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
 @Injectable()
 export class PayOSService {
-    private readonly payosApiUrl: string;
-    private readonly clientId: string;
-    private readonly apiKey: string;
-    private readonly checksumKey: string;
+    public readonly payosApiUrl: string;
+    public readonly clientId: string;
+    public readonly apiKey: string;
+    public readonly checksumKey: string;
+    public readonly serverBaseUrl: string;
 
     constructor(
         private readonly configService: ConfigService,
@@ -18,6 +19,7 @@ export class PayOSService {
         this.clientId = this.configService.get<string>('PAYOS_CLIENT_ID');
         this.apiKey = this.configService.get<string>('PAYOS_API_KEY');
         this.checksumKey = this.configService.get<string>('PAYOS_CHECKSUM_KEY');
+        this.serverBaseUrl = this.configService.get<string>('SERVER_BASE_URL');
     }
 
     async createPaymentLink(orderData: {
@@ -45,6 +47,7 @@ export class PayOSService {
                         cancelUrl: orderData.cancelUrl,
                         returnUrl: orderData.returnUrl,
                         signature: signature,
+                        ipnUrl: `${this.serverBaseUrl}/payment/webhook`,
                         embedded: true,
                     },
                     {
