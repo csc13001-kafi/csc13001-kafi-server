@@ -5,7 +5,9 @@ RUN corepack enable
 
 WORKDIR /server
 
-COPY package*.json ./
+COPY package*.json pnpm-lock.yaml ./
+
+RUN pnpm config set registry https://registry.npmjs.org
 
 RUN pnpm install
 
