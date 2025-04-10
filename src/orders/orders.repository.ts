@@ -112,7 +112,7 @@ export class OrdersRepository {
         id: string;
         employeeName: string;
         clientPhoneNumber: string;
-        table: number;
+        table: string;
         time: Date;
         numberOfProducts: number;
         totalPrice: number;
