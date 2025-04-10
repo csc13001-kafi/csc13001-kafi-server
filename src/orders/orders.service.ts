@@ -139,10 +139,8 @@ export class OrdersService {
                 });
 
                 return {
-                    order: {
-                        orderDetails,
-                        orderGeneralDto,
-                    },
+                    discountPercentage,
+                    discount,
                     paymentLink:
                         paymentResponse.paymentResponse?.data?.checkoutUrl,
                     qrLink: paymentResponse.qrLink,
@@ -196,10 +194,8 @@ export class OrdersService {
                 }
 
                 return {
-                    order: {
-                        orderDetails,
-                        orderGeneralDto,
-                    },
+                    discountPercentage,
+                    discount,
                     message: 'Order created successfully',
                 };
             }
