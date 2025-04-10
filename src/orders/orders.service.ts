@@ -61,35 +61,32 @@ export class OrdersService {
     }
 
     async checkoutOrder(employeeId: string, orderDto: CreateOrderDto) {
-        try {
-            const numberOfProducts = orderDto.products.length;
-            let totalPrice = 0;
-            for (let i = 0; i < numberOfProducts; i++) {
-                const product = await this.productsRepository.findById(
-                    orderDto.products[i],
-                );
-                totalPrice =
-                    totalPrice +
-                    product.dataValues.price * orderDto.quantities[i];
-            }
-
-            const client = await this.usersRepository.findOneByPhoneNumber(
-                orderDto.clientPhoneNumber,
+        const numberOfProducts = orderDto.products.length;
+        let totalPrice = 0;
+        for (let i = 0; i < numberOfProducts; i++) {
+            const product = await this.productsRepository.findById(
+                orderDto.products[i],
             );
-            let afterDiscountPrice = totalPrice;
-            let discountPercentage = 0;
-            let discount = 0;
-            if (client) {
-                const loyaltyPoints = client.loyaltyPoints;
-                ({ afterDiscountPrice, discountPercentage } =
-                    this.calculateDiscount(loyaltyPoints, totalPrice));
-                discount = totalPrice - afterDiscountPrice;
-            }
+            totalPrice =
+                totalPrice + product.dataValues.price * orderDto.quantities[i];
+        }
+        const client = await this.usersRepository.findOneByPhoneNumber(
+            orderDto.clientPhoneNumber,
+        );
+        let afterDiscountPrice = totalPrice;
+        let discountPercentage = 0;
+        let discount = 0;
+        if (client) {
+            const loyaltyPoints = client.loyaltyPoints;
+            ({ afterDiscountPrice, discountPercentage } =
+                this.calculateDiscount(loyaltyPoints, totalPrice));
+            discount = totalPrice - afterDiscountPrice;
+        }
+        try {
             const employee = await this.usersRepository.findOneById(employeeId);
             if (orderDto.paymentMethod === PaymentMethod.QR) {
                 // For QR payment, we create a payment request first
                 const orderCode = Math.floor(Math.random() * 100000);
-
                 const paymentDto: {
                     orderCode: number;
                     amount: number;
@@ -113,7 +110,6 @@ export class OrdersService {
                           cancelUrl: 'https://kafi-app.com/cancel',
                           returnUrl: 'https://kafi-app.com/success',
                       };
-
                 const paymentResponse =
                     await this.payosService.createPaymentLink(paymentDto);
 
@@ -182,13 +178,12 @@ export class OrdersService {
                         await this.usersRepository.findOneByPhoneNumber(
                             orderDto.clientPhoneNumber,
                         );
-                    if (!client) {
-                        throw new BadRequestException('Client not found');
+                    if (client) {
+                        await this.usersRepository.updateLoyaltyPoints(
+                            client.phone,
+                            Math.round(totalPrice / 1000),
+                        );
                     }
-                    await this.usersRepository.updateLoyaltyPoints(
-                        orderDto.clientPhoneNumber,
-                        Math.round(totalPrice / 1000),
-                    );
                 }
 
                 const order = await this.ordersRepository.create(
@@ -256,13 +251,12 @@ export class OrdersService {
                 const client = await this.usersRepository.findOneByPhoneNumber(
                     orderGeneralDto.clientPhoneNumber,
                 );
-                if (!client) {
-                    throw new BadRequestException('Client not found');
+                if (client) {
+                    await this.usersRepository.updateLoyaltyPoints(
+                        orderGeneralDto.clientPhoneNumber,
+                        Math.round(orderDetails.totalPrice / 1000),
+                    );
                 }
-                await this.usersRepository.updateLoyaltyPoints(
-                    orderGeneralDto.clientPhoneNumber,
-                    Math.round(orderDetails.totalPrice / 1000),
-                );
             }
 
             const order = await this.ordersRepository.create(

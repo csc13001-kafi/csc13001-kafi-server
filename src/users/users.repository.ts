@@ -48,6 +48,9 @@ export class UsersRepository {
         const user = await this.userModel.findOne<User>({
             where: { phone: phoneNumber },
         });
+        if (!user) {
+            return null;
+        }
         return user.dataValues as User;
     }
 

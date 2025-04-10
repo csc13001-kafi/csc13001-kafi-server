@@ -68,12 +68,19 @@ export class PayOSService {
                       ipnUrl: `${this.serverBaseUrl}/payment/webhook`,
                       embedded: true,
                   };
-
             const response = await firstValueFrom(
                 this.httpService.post(
                     `${this.payosApiUrl}/v2/payment-requests`,
                     {
-                        paymentDto,
+                        orderCode: paymentDto.orderCode,
+                        amount: paymentDto.amount,
+                        description: paymentDto.description,
+                        buyerPhone: paymentDto.buyerPhone,
+                        cancelUrl: paymentDto.cancelUrl,
+                        returnUrl: paymentDto.returnUrl,
+                        signature: paymentDto.signature,
+                        ipnUrl: paymentDto.ipnUrl,
+                        embedded: paymentDto.embedded,
                     },
                     {
                         headers: {
