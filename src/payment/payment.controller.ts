@@ -1,8 +1,12 @@
 import { UseGuards } from '@nestjs/common';
 import { Controller, Post, Body, Headers, HttpCode } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
-import { ApiOperation } from '@nestjs/swagger';
+import {
+    ApiBody,
+    ApiResponse,
+    ApiOperation,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ATAuthGuard } from 'src/auth/guards/at-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/roles.enum';
@@ -21,6 +25,7 @@ export class WebhooksController {
         return this.paymentService.handlePayosWebhook(webhookData, headers);
     }
 
+    @ApiBearerAuth('access-token')
     @ApiOperation({
         summary:
             'Confirm PayOS webhook. Only manager can call this endpoint [MANAGER]',
