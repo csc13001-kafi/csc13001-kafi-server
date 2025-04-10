@@ -76,30 +76,46 @@ export class OrdersService {
             const client = await this.usersRepository.findOneByPhoneNumber(
                 orderDto.clientPhoneNumber,
             );
-
-            if (!client) {
-                throw new BadRequestException('Client not found');
+            let afterDiscountPrice = totalPrice;
+            let discountPercentage = 0;
+            let discount = 0;
+            if (client) {
+                const loyaltyPoints = client.loyaltyPoints;
+                ({ afterDiscountPrice, discountPercentage } =
+                    this.calculateDiscount(loyaltyPoints, totalPrice));
+                discount = totalPrice - afterDiscountPrice;
             }
-
             const employee = await this.usersRepository.findOneById(employeeId);
-            const loyaltyPoints = client.loyaltyPoints;
-            const { afterDiscountPrice, discountPercentage } =
-                this.calculateDiscount(loyaltyPoints, totalPrice);
-            const discount = totalPrice - afterDiscountPrice;
-
             if (orderDto.paymentMethod === PaymentMethod.QR) {
                 // For QR payment, we create a payment request first
                 const orderCode = Math.floor(Math.random() * 100000);
 
+                const paymentDto: {
+                    orderCode: number;
+                    amount: number;
+                    description: string;
+                    phoneNumber?: string;
+                    cancelUrl: string;
+                    returnUrl: string;
+                } = orderDto.clientPhoneNumber
+                    ? {
+                          orderCode: orderCode,
+                          amount: Math.round(afterDiscountPrice),
+                          description: `Payment for order ${orderCode}`,
+                          phoneNumber: orderDto.clientPhoneNumber,
+                          cancelUrl: 'https://kafi-app.com/cancel',
+                          returnUrl: 'https://kafi-app.com/success',
+                      }
+                    : {
+                          orderCode: orderCode,
+                          amount: Math.round(totalPrice),
+                          description: `Payment for order ${orderCode}`,
+                          cancelUrl: 'https://kafi-app.com/cancel',
+                          returnUrl: 'https://kafi-app.com/success',
+                      };
+
                 const paymentResponse =
-                    await this.payosService.createPaymentLink({
-                        orderCode: orderCode,
-                        amount: Math.round(afterDiscountPrice),
-                        description: `Payment for order ${orderCode}`,
-                        phoneNumber: orderDto.clientPhoneNumber,
-                        cancelUrl: 'https://kafi-app.com/cancel',
-                        returnUrl: 'https://kafi-app.com/success',
-                    });
+                    await this.payosService.createPaymentLink(paymentDto);
 
                 if (!paymentResponse) {
                     throw new BadRequestException('Payment failed');
@@ -159,12 +175,38 @@ export class OrdersService {
                     products: products,
                 };
 
+                if (!orderDto.clientPhoneNumber) {
+                    orderDto.clientPhoneNumber = '0000000000';
+                } else {
+                    const client =
+                        await this.usersRepository.findOneByPhoneNumber(
+                            orderDto.clientPhoneNumber,
+                        );
+                    if (!client) {
+                        throw new BadRequestException('Client not found');
+                    }
+                    await this.usersRepository.updateLoyaltyPoints(
+                        orderDto.clientPhoneNumber,
+                        Math.round(totalPrice / 1000),
+                    );
+                }
+
                 const order = await this.ordersRepository.create(
                     orderGeneralDto,
                     orderDetails,
                 );
 
-                return order;
+                if (!order) {
+                    throw new BadRequestException('Order creation failed');
+                }
+
+                return {
+                    order: {
+                        orderDetails,
+                        orderGeneralDto,
+                    },
+                    message: 'Order created successfully',
+                };
             }
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
@@ -208,12 +250,37 @@ export class OrdersService {
         },
     ) {
         try {
+            if (!orderGeneralDto.clientPhoneNumber) {
+                orderGeneralDto.clientPhoneNumber = '0000000000';
+            } else {
+                const client = await this.usersRepository.findOneByPhoneNumber(
+                    orderGeneralDto.clientPhoneNumber,
+                );
+                if (!client) {
+                    throw new BadRequestException('Client not found');
+                }
+                await this.usersRepository.updateLoyaltyPoints(
+                    orderGeneralDto.clientPhoneNumber,
+                    Math.round(orderDetails.totalPrice / 1000),
+                );
+            }
+
             const order = await this.ordersRepository.create(
                 orderGeneralDto,
                 orderDetails,
             );
 
-            return order;
+            if (!order) {
+                throw new BadRequestException('Order creation failed');
+            }
+
+            return {
+                order: {
+                    orderDetails,
+                    orderGeneralDto,
+                },
+                message: 'Order created successfully',
+            };
         } catch (error: any) {
             console.error('Error completing order:', error);
             throw new Error(`Failed to complete order: ${error.message}`);

@@ -7,6 +7,7 @@ import {
     IsEnum,
     IsDateString,
     ArrayMinSize,
+    IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PaymentMethod } from '../enums/payment-method.enum';
@@ -72,7 +73,7 @@ export class CreateOrderDto {
         example: '+1234567890',
     })
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     clientPhoneNumber: string;
 
     @ApiProperty({

@@ -76,7 +76,6 @@ export class OrdersController {
                 'time',
                 'products',
                 'quantities',
-                'clientPhoneNumber',
                 'paymentMethod',
             ],
         },

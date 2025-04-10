@@ -26,7 +26,7 @@ export class PayOSService {
         orderCode: number;
         amount: number;
         description: string;
-        phoneNumber: string;
+        phoneNumber?: string;
         cancelUrl: string;
         returnUrl: string;
     }) {
@@ -36,19 +36,44 @@ export class PayOSService {
                 .createHmac('sha256', this.checksumKey)
                 .update(signatureString)
                 .digest('hex');
+            const paymentDto: {
+                orderCode: number;
+                amount: number;
+                description: string;
+                buyerPhone?: string;
+                signature: string;
+                ipnUrl: string;
+                embedded: boolean;
+                cancelUrl: string;
+                returnUrl: string;
+            } = orderData.phoneNumber
+                ? {
+                      orderCode: orderData.orderCode,
+                      amount: orderData.amount,
+                      description: orderData.description,
+                      buyerPhone: orderData.phoneNumber,
+                      cancelUrl: orderData.cancelUrl,
+                      returnUrl: orderData.returnUrl,
+                      signature: signature,
+                      ipnUrl: `${this.serverBaseUrl}/payment/webhook`,
+                      embedded: true,
+                  }
+                : {
+                      orderCode: orderData.orderCode,
+                      amount: orderData.amount,
+                      description: orderData.description,
+                      cancelUrl: orderData.cancelUrl,
+                      returnUrl: orderData.returnUrl,
+                      signature: signature,
+                      ipnUrl: `${this.serverBaseUrl}/payment/webhook`,
+                      embedded: true,
+                  };
+
             const response = await firstValueFrom(
                 this.httpService.post(
                     `${this.payosApiUrl}/v2/payment-requests`,
                     {
-                        orderCode: orderData.orderCode,
-                        amount: orderData.amount,
-                        description: orderData.description,
-                        buyerPhone: orderData.phoneNumber,
-                        cancelUrl: orderData.cancelUrl,
-                        returnUrl: orderData.returnUrl,
-                        signature: signature,
-                        ipnUrl: `${this.serverBaseUrl}/payment/webhook`,
-                        embedded: true,
+                        paymentDto,
                     },
                     {
                         headers: {

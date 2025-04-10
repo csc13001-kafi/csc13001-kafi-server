@@ -51,6 +51,16 @@ export class UsersRepository {
         return user.dataValues as User;
     }
 
+    async updateLoyaltyPoints(
+        phoneNumber: string,
+        points: number,
+    ): Promise<void> {
+        await this.userModel.update(
+            { loyaltyPoints: points },
+            { where: { phone: phoneNumber } },
+        );
+    }
+
     async createEmployee(CreateDto: CreateEmployeeDto): Promise<User> {
         const {
             username,
