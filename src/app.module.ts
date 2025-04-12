@@ -17,6 +17,7 @@ import { PaymentModule } from './payment/payment.module';
 import { HttpModule } from '@nestjs/axios';
 import { AiModule } from './ai/ai.module';
 import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
     imports: [
@@ -96,6 +97,7 @@ import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
         UploadModule,
         OrdersModule,
         PaymentModule,
+        AnalyticsModule,
         AiModule,
     ],
     controllers: [AppController],

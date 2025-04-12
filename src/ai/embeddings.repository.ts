@@ -363,9 +363,6 @@ export class EmbeddingsRepository {
         }
     }
 
-    /**
-     * Fallback method for finding similar documents when vector operations aren't available
-     */
     private async findSimilarDocumentsFallback(
         embedding: number[],
         limit = 3,
@@ -482,9 +479,6 @@ export class EmbeddingsRepository {
         return results as { id: string; content: string }[];
     }
 
-    /**
-     * Format a number array into a proper pgvector string
-     */
     private formatVectorString(embedding: number[]): string {
         return `[${embedding.join(',')}]`;
     }

@@ -95,7 +95,7 @@ export class VectorDBAdapter {
                 );
 
             if (similarDocuments.length === 0) {
-                return ['Không có dữ liệu để tham khảo.'];
+                return ['There is no data to reference.'];
             }
 
             return similarDocuments.map((doc) => doc.content);
@@ -103,7 +103,9 @@ export class VectorDBAdapter {
             this.logger.error(
                 `Error querying similar documents: ${error.message}`,
             );
-            return ['Đã xảy ra lỗi khi tìm kiếm thông tin tham khảo.'];
+            return [
+                'An error occurred while searching for reference information.',
+            ];
         }
     }
 

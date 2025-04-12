@@ -40,36 +40,18 @@ export class AiService implements OnModuleInit {
             'Quán cà phê Kafi chuyên về các loại cà phê đặc sản và thức uống sáng tạo.',
             'Menu của Kafi bao gồm cà phê Việt Nam truyền thống và các biến thể hiện đại.',
             'Giờ mở cửa của Kafi là từ 7:00 đến 22:00 hàng ngày, kể cả các ngày lễ.',
-            'Kafi có 3 chi nhánh ở Thành phố Hồ Chí Minh, nằm ở Quận 1, Quận 3 và Quận 7.',
-            'Kafi được thành lập vào năm 2020 và nhanh chóng trở thành điểm đến yêu thích của giới trẻ.',
-
-            // Products and menu
-            'Cà phê sữa đá là sản phẩm bán chạy nhất của Kafi, chiếm 30% doanh số.',
-            'Kafi sử dụng hạt cà phê Arabica từ Đà Lạt và Robusta từ Buôn Ma Thuột.',
-            'Các sản phẩm nổi bật khác bao gồm: Bạc xỉu, Cà phê trứng, Cà phê dừa, và Cold Brew.',
-            'Ngoài cà phê, Kafi còn phục vụ trà, nước ép trái cây tươi và các món bánh nhẹ.',
-            'Giá sản phẩm dao động từ 25.000đ đến 85.000đ, phù hợp với nhiều đối tượng khách hàng.',
+            'Kafi được thành lập vào năm 2025',
 
             // Business strategy
-            'Kafi áp dụng chiến lược khác biệt hóa thông qua không gian thiết kế và trải nghiệm khách hàng.',
             'Chương trình khách hàng thân thiết của Kafi có 3 cấp độ: Bạc, Vàng và Kim cương.',
-            'Kafi chú trọng vào trải nghiệm trên nền tảng số, với ứng dụng đặt hàng và tích điểm.',
-            'Chiến lược marketing chính của Kafi là mạng xã hội và influencer marketing.',
-            'Kafi hợp tác với các doanh nghiệp lân cận để tạo ra các gói combo và ưu đãi chéo.',
+            'Kafi chú trọng vào trải nghiệm trên nền tảng số, với ứng dụng POS và tích điểm cho khách hàng thân thiết',
 
             // Customer insights
-            'Khách hàng mục tiêu của Kafi chủ yếu là sinh viên và nhân viên văn phòng từ 18-35 tuổi.',
-            'Khung giờ cao điểm của Kafi là 7:30-9:00 và 17:00-19:00 các ngày trong tuần.',
-            'Cuối tuần thường có lượng khách tăng 40% so với ngày thường.',
-            'Khách hàng thường ở lại quán trung bình 45-60 phút mỗi lần ghé thăm.',
-            'Theo khảo sát, 70% khách hàng chọn Kafi vì chất lượng đồ uống, 20% vì không gian.',
+            // ...
 
             // Operations
+            'Kafi tự xây dựng hệ thống POS client và xem menu cùng với số điểm tích lũy của chương trình khách hàng thân thiết',
             'Kafi sử dụng hệ thống POS tích hợp để quản lý đơn hàng và kho.',
-            'Mỗi chi nhánh có 5-7 nhân viên, bao gồm quản lý, pha chế và phục vụ.',
-            'Kafi mua nguyên liệu chính từ các nhà cung cấp địa phương để đảm bảo độ tươi ngon.',
-            'Chi phí vận hành chính bao gồm: nhân công (40%), nguyên liệu (30%), thuê mặt bằng (20%).',
-            'Kafi áp dụng các biện pháp bền vững như sử dụng ống hút giấy và bao bì có thể tái chế.',
         ];
 
         this.logger.log(`Loaded ${this.knowledgeBase.length} knowledge items`);
@@ -179,7 +161,7 @@ export class AiService implements OnModuleInit {
             return responseContent;
         } catch (error) {
             this.logger.error(`Error generating response: ${error.message}`);
-            throw new Error('Đã xảy ra lỗi khi xử lý tin nhắn của bạn');
+            throw new Error('An error occurred while processing your message');
         }
     }
 
@@ -194,7 +176,7 @@ export class AiService implements OnModuleInit {
             return embeddingResponse.data[0].embedding;
         } catch (error) {
             this.logger.error(`Error creating embedding: ${error.message}`);
-            throw new Error('Không thể tạo embedding');
+            throw new Error('Cannot create embedding');
         }
     }
 
