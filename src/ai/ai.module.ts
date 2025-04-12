@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ConfigModule } from '@nestjs/config';
-import { AiGateway } from './ai.gateway';
 import { VectorDBAdapter } from './vector-db.adapter';
 import { AiController } from './ai.controller';
 import { SequelizeModule } from '@nestjs/sequelize';
@@ -14,7 +13,6 @@ import { MigrationRunner } from './migrations/migration.runner';
     controllers: [AiController],
     providers: [
         AiService,
-        AiGateway,
         VectorDBAdapter,
         EmbeddingsRepository,
         MigrationRunner,
