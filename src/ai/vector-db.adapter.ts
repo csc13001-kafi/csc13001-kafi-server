@@ -7,7 +7,7 @@ import { EmbeddingsRepository } from './embeddings.repository';
 export class VectorDBAdapter {
     private openai: OpenAI;
     private readonly logger = new Logger(VectorDBAdapter.name);
-    private readonly SIMILARITY_THRESHOLD = 0.6;
+    private readonly SIMILARITY_THRESHOLD = 0.5;
 
     constructor(
         private configService: ConfigService,

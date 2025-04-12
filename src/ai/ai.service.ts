@@ -41,8 +41,6 @@ export class AiService implements OnModuleInit {
     private async loadKnowledgeBase() {
         this.knowledgeBase = [
             // General coffee shop information
-            'Quán cà phê Kafi chuyên về các loại cà phê đặc sản và thức uống sáng tạo.',
-            'Menu của Kafi bao gồm cà phê Việt Nam truyền thống và các biến thể hiện đại.',
             'Giờ mở cửa của Kafi là từ 7:00 đến 22:00 hàng ngày, kể cả các ngày lễ.',
             'Kafi được thành lập vào năm 2025',
 
@@ -61,9 +59,12 @@ export class AiService implements OnModuleInit {
             );
 
             if (analyticsData) {
-                this.knowledgeBase.push(
-                    `Thống kê hiện tại của Kafi: ${analyticsData}`,
-                );
+                const newAnalyticsData = analyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
             }
         } catch (error) {
             this.logger.warn(
@@ -110,13 +111,13 @@ export class AiService implements OnModuleInit {
                 3,
             );
 
-            //console.log('rawRelevantContext', rawRelevantContext);
+            console.log('rawRelevantContext', rawRelevantContext);
             // Assess if results are truly relevant to the user query
             const relevantContext = this.assessRelevance(
                 message,
                 rawRelevantContext,
             );
-            //console.log('relevantContext', relevantContext);
+            console.log('relevantContext', relevantContext);
 
             // Add user message to history
             const userMessage = {
@@ -401,6 +402,12 @@ export class AiService implements OnModuleInit {
                 const productsCount =
                     await this.analyticsService.getProductsCount();
                 analyticsData += `- Số lượng sản phẩm: ${productsCount}\n`;
+                const products = await this.analyticsService.getProducts();
+                let productList = '';
+                for (const product of products) {
+                    productList += `- Sản phẩm: ${product.name}: ${product.price}, `;
+                }
+                analyticsData += `- Danh sách sản phẩm: ${productList}\n`;
             }
 
             // Get categories data if requested
@@ -431,6 +438,12 @@ export class AiService implements OnModuleInit {
                 analyticsData += `- Số lượng quản lý: ${dashboardStats.managersCount}\n`;
                 analyticsData += `- Tổng số nhân sự: ${dashboardStats.employeesCount + dashboardStats.managersCount}\n`;
                 analyticsData += `- Số lượng sản phẩm: ${dashboardStats.productsCount}\n`;
+                const products = await this.analyticsService.getProducts();
+                let productList = '';
+                for (const product of products) {
+                    productList += `- Sản phẩm: ${product.name}: ${product.price}, `;
+                }
+                analyticsData += `- Danh sách sản phẩm: ${productList}\n`;
             }
 
             return analyticsData || null;

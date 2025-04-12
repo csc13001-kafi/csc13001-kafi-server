@@ -4,6 +4,7 @@ import { OrdersRepository } from 'src/orders/orders.repository';
 import { UsersRepository } from 'src/users/users.repository';
 import { ProductsRepository } from 'src/products/products.repository';
 import { CategoriesRepository } from 'src/categories/categories.repository';
+import { Product } from 'src/products/entities/product.model';
 @Injectable()
 export class AnalyticsService {
     private readonly logger = new Logger(AnalyticsService.name);
@@ -29,6 +30,15 @@ export class AnalyticsService {
                 `Error in orders count service: ${error.message}`,
             );
             throw new Error('Failed to get orders count by time range');
+        }
+    }
+
+    async getProducts(): Promise<Product[]> {
+        try {
+            return await this.productsRepository.findAll();
+        } catch (error) {
+            this.logger.error(`Error in products service: ${error.message}`);
+            throw new Error('Failed to get products');
         }
     }
 
