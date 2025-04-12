@@ -330,4 +330,11 @@ export class UsersRepository {
         // Generate a random 6-digit number
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
+
+    async countByRole(role: Role): Promise<number> {
+        const count = await this.userModel.count({
+            where: { role },
+        });
+        return count;
+    }
 }

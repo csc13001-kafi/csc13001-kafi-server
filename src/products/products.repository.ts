@@ -211,4 +211,9 @@ export class ProductsRepository {
             throw new InternalServerErrorException((error as Error).message);
         }
     }
+
+    async countProducts(): Promise<number> {
+        const count = await this.productModel.count();
+        return count;
+    }
 }

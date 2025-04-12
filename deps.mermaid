@@ -5,12 +5,15 @@ graph LR
   AiModule-->RedisCoreModule
   AiModule-->SequelizeCoreModule
   AiModule-->SequelizeModule
+  AnalyticsModule-->CategoriesModule
   AnalyticsModule-->ConfigHostModule
   AnalyticsModule-->ConfigModule
   AnalyticsModule-->MailerCoreModule
+  AnalyticsModule-->OrdersModule
+  AnalyticsModule-->ProductsModule
   AnalyticsModule-->RedisCoreModule
   AnalyticsModule-->SequelizeCoreModule
-  AnalyticsModule-->SequelizeModule
+  AnalyticsModule-->UsersModule
   AppModule-->AiModule
   AppModule-->AnalyticsModule
   AppModule-->AuthModule

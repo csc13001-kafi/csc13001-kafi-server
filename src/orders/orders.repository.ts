@@ -8,6 +8,7 @@ import { Order } from './entities/order.model';
 import { OrderDetails } from './entities/order_details.model';
 import { Product } from '../products/entities/product.model';
 import { v4 as uuidv4 } from 'uuid';
+import { Op } from 'sequelize';
 @Injectable()
 export class OrdersRepository {
     constructor(
@@ -159,5 +160,16 @@ export class OrdersRepository {
             orderDetails: newOrderDetails,
         };
         return order;
+    }
+
+    async countByTimeRange(startDate: Date, endDate: Date): Promise<number> {
+        const count = await this.orderModel.count({
+            where: {
+                time: {
+                    [Op.between]: [startDate, endDate],
+                },
+            },
+        });
+        return count;
     }
 }

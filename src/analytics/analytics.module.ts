@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
-import { SequelizeModule } from '@nestjs/sequelize';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
-import { Order } from '../orders/entities/order.model';
-import { User } from '../users/entities/user.model';
-import { Category } from '../categories/entities/category.model';
-import { Product } from '../products/entities/product.model';
-import { AccessControlService } from '../ac/ac.service';
-
+import { OrdersModule } from 'src/orders/orders.module';
+import { UsersModule } from 'src/users/users.module';
+import { ProductsModule } from 'src/products/products.module';
+import { CategoriesModule } from 'src/categories/categories.module';
+import { AccessControlService } from 'src/ac/ac.service';
 @Module({
-    imports: [SequelizeModule.forFeature([Order, User, Category, Product])],
+    imports: [OrdersModule, UsersModule, ProductsModule, CategoriesModule],
     controllers: [AnalyticsController],
     providers: [AnalyticsService, AccessControlService],
     exports: [AnalyticsService],

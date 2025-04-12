@@ -1,21 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Order } from '../orders/entities/order.model';
-import { User } from '../users/entities/user.model';
-import { Category } from '../categories/entities/category.model';
-import { Product } from '../products/entities/product.model';
 import { Role } from '../auth/enums/roles.enum';
-import { Op } from 'sequelize';
-
+import { OrdersRepository } from 'src/orders/orders.repository';
+import { UsersRepository } from 'src/users/users.repository';
+import { ProductsRepository } from 'src/products/products.repository';
+import { CategoriesRepository } from 'src/categories/categories.repository';
 @Injectable()
 export class AnalyticsService {
     private readonly logger = new Logger(AnalyticsService.name);
 
     constructor(
-        @InjectModel(Order) private readonly orderModel: typeof Order,
-        @InjectModel(User) private readonly userModel: typeof User,
-        @InjectModel(Category) private readonly categoryModel: typeof Category,
-        @InjectModel(Product) private readonly productModel: typeof Product,
+        private readonly ordersRepository: OrdersRepository,
+        private readonly usersRepository: UsersRepository,
+        private readonly productsRepository: ProductsRepository,
+        private readonly categoriesRepository: CategoriesRepository,
     ) {}
 
     async getOrdersCountByTimeRange(
@@ -23,52 +20,52 @@ export class AnalyticsService {
         endDate: Date,
     ): Promise<number> {
         try {
-            const count = await this.orderModel.count({
-                where: {
-                    time: {
-                        [Op.between]: [startDate, endDate],
-                    },
-                },
-            });
-
-            return count;
+            return await this.ordersRepository.countByTimeRange(
+                startDate,
+                endDate,
+            );
         } catch (error) {
-            this.logger.error(`Error counting orders: ${error.message}`);
-            throw new Error('Failed to count orders by time range');
+            this.logger.error(
+                `Error in orders count service: ${error.message}`,
+            );
+            throw new Error('Failed to get orders count by time range');
         }
     }
 
     async getCategoriesCount(): Promise<number> {
         try {
-            return await this.categoryModel.count();
+            return await this.categoriesRepository.countCategories();
         } catch (error) {
-            this.logger.error(`Error counting categories: ${error.message}`);
-            throw new Error('Failed to count categories');
+            this.logger.error(
+                `Error in categories count service: ${error.message}`,
+            );
+            throw new Error('Failed to get categories count');
         }
     }
 
     async getUsersCountByRole(role: Role): Promise<number> {
         try {
-            return await this.userModel.count({
-                where: { role },
-            });
+            return await this.usersRepository.countByRole(role);
         } catch (error) {
-            this.logger.error(`Error counting users by role: ${error.message}`);
-            throw new Error(`Failed to count users with role ${role}`);
+            this.logger.error(`Error in users count service: ${error.message}`);
+            throw new Error(`Failed to get users count with role ${role}`);
         }
     }
 
     async getProductsCount(): Promise<number> {
         try {
-            return await this.productModel.count();
+            return await this.productsRepository.countProducts();
         } catch (error) {
-            this.logger.error(`Error counting products: ${error.message}`);
-            throw new Error('Failed to count products');
+            this.logger.error(
+                `Error in products count service: ${error.message}`,
+            );
+            throw new Error('Failed to get products count');
         }
     }
 
     async getDashboardStats(startDate: Date, endDate: Date): Promise<any> {
         try {
+            // Business logic: Get all stats in parallel for efficiency
             const [
                 ordersCount,
                 categoriesCount,
@@ -83,6 +80,7 @@ export class AnalyticsService {
                 this.getProductsCount(),
             ]);
 
+            // Business logic: Format the response data
             return {
                 ordersCount,
                 categoriesCount,
@@ -96,7 +94,7 @@ export class AnalyticsService {
             };
         } catch (error) {
             this.logger.error(
-                `Error getting dashboard stats: ${error.message}`,
+                `Error in dashboard stats service: ${error.message}`,
             );
             throw new Error('Failed to get dashboard statistics');
         }
