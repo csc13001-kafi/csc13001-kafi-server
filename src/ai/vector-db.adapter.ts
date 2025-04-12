@@ -7,6 +7,7 @@ import { EmbeddingsRepository } from './embeddings.repository';
 export class VectorDBAdapter {
     private openai: OpenAI;
     private readonly logger = new Logger(VectorDBAdapter.name);
+    private readonly SIMILARITY_THRESHOLD = 0.6;
 
     constructor(
         private configService: ConfigService,
@@ -44,7 +45,6 @@ export class VectorDBAdapter {
                 try {
                     const embeddingResponse =
                         await this.openai.embeddings.create({
-                            // This is important: use a supported model
                             model: 'text-embedding-3-small',
                             input: batch,
                             encoding_format: 'float',
@@ -70,7 +70,6 @@ export class VectorDBAdapter {
             }
 
             if (embeddingsData.length > 0) {
-                // Store all embeddings in the database
                 await this.embeddingsRepository.bulkStoreEmbeddings(
                     embeddingsData,
                 );
@@ -98,7 +97,21 @@ export class VectorDBAdapter {
                 return ['There is no data to reference.'];
             }
 
-            return similarDocuments.map((doc) => doc.content);
+            // Filter by similarity threshold
+            const filteredDocuments = similarDocuments.filter(
+                (doc) => doc.similarity >= this.SIMILARITY_THRESHOLD,
+            );
+
+            if (filteredDocuments.length === 0) {
+                return ['There is no relevant data to reference.'];
+            }
+
+            return filteredDocuments
+                .slice(0, limit)
+                .map(
+                    (doc) =>
+                        `[Relevance: ${(doc.similarity * 100).toFixed(0)}%] ${doc.content}`,
+                );
         } catch (error) {
             this.logger.error(
                 `Error querying similar documents: ${error.message}`,
