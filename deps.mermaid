@@ -1,5 +1,12 @@
 graph LR
-    AppModule-->AuthModule
+    AiModule-->ConfigHostModule
+  AiModule-->ConfigModule
+  AiModule-->MailerCoreModule
+  AiModule-->RedisCoreModule
+  AiModule-->SequelizeCoreModule
+  AiModule-->SequelizeModule
+  AppModule-->AiModule
+  AppModule-->AuthModule
   AppModule-->CategoriesModule
   AppModule-->ConfigHostModule
   AppModule-->ConfigModule
@@ -11,6 +18,7 @@ graph LR
   AppModule-->PaymentModule
   AppModule-->ProductsModule
   AppModule-->RedisCoreModule
+  AppModule-->RedisModule
   AppModule-->SequelizeCoreModule
   AppModule-->SequelizeModule
   AppModule-->UploadModule
@@ -21,7 +29,6 @@ graph LR
   AuthModule-->MailerCoreModule
   AuthModule-->PassportModule
   AuthModule-->RedisCoreModule
-  AuthModule-->RedisModule
   AuthModule-->SequelizeCoreModule
   AuthModule-->UsersModule
   CategoriesModule-->ConfigHostModule
