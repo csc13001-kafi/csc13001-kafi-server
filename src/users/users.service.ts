@@ -87,6 +87,7 @@ export class UsersService {
         birthdate: string;
         workStart: string;
         workEnd: string;
+        loyaltyPoints: number;
     }> {
         try {
             const { id } = profileUser;
@@ -108,6 +109,7 @@ export class UsersService {
                 birthdate: user.birthdate,
                 workStart: user.workStart,
                 workEnd: user.workEnd,
+                loyaltyPoints: user.loyaltyPoints,
             };
             return newUser;
         } catch (error) {

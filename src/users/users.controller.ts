@@ -92,6 +92,7 @@ export class UsersController {
             birthdate: string;
             workStart: string;
             workEnd: string;
+            loyaltyPoints: number;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
     }
