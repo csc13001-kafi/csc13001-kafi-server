@@ -294,4 +294,67 @@ export class AnalyticsService {
             );
         }
     }
+
+    async getOrdersByDayAndPaymentMethod(month: number): Promise<any> {
+        try {
+            // Validate month input
+            if (month < 1 || month > 12) {
+                throw new Error('Month must be between 1 and 12');
+            }
+
+            // Use current year
+            const currentYear = new Date().getFullYear();
+
+            // Get data from repository
+            const dayStats =
+                await this.ordersRepository.getOrderCountsByDayAndPaymentMethod(
+                    month,
+                    currentYear,
+                );
+
+            // Get month name for display
+            const monthName = new Date(
+                currentYear,
+                month - 1,
+                1,
+            ).toLocaleString('en-US', { month: 'long' });
+
+            // Calculate totals
+            let totalCash = 0;
+            let totalQr = 0;
+
+            dayStats.forEach((stat) => {
+                totalCash += stat.cash;
+                totalQr += stat.qr;
+            });
+
+            return {
+                month,
+                monthName,
+                year: currentYear,
+                days: dayStats,
+                summary: {
+                    totalCash,
+                    totalQr,
+                    total: totalCash + totalQr,
+                    cashPercentage:
+                        totalCash + totalQr > 0
+                            ? Math.round(
+                                  (totalCash / (totalCash + totalQr)) * 100,
+                              )
+                            : 0,
+                    qrPercentage:
+                        totalCash + totalQr > 0
+                            ? Math.round(
+                                  (totalQr / (totalCash + totalQr)) * 100,
+                              )
+                            : 0,
+                },
+            };
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get orders by day and payment method: ${error.message}`,
+            );
+        }
+    }
 }

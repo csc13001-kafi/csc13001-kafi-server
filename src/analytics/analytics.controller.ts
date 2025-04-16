@@ -89,35 +89,6 @@ export class AnalyticsController {
         };
     }
 
-    @Get('orders/month')
-    @ApiOperation({ summary: 'Get orders count by month [MANAGER, EMPLOYEE]' })
-    @ApiQuery({
-        name: 'month',
-        required: true,
-        type: Number,
-        description: 'Month number (1-12)',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Orders data for the month retrieved successfully',
-    })
-    @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getOrdersByMonth(@Query('month') monthStr: string) {
-        try {
-            const month = parseInt(monthStr, 10);
-
-            if (isNaN(month) || month < 1 || month > 12) {
-                throw new Error('Month must be a number between 1 and 12');
-            }
-
-            return this.analyticsService.getOrdersByMonth(month);
-        } catch (error) {
-            throw new BadRequestException(
-                'Failed to get orders by month: ' + error.message,
-            );
-        }
-    }
-
     @Get('orders/hours')
     @ApiOperation({
         summary:
@@ -233,6 +204,44 @@ export class AnalyticsController {
             );
             throw new BadRequestException(
                 'Failed to get top selling products: ' + error.message,
+            );
+        }
+    }
+
+    @Get('orders/months')
+    @ApiOperation({
+        summary:
+            'Get order counts by day and payment method for a specific month [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'month',
+        required: true,
+        type: Number,
+        description: 'Month number (1-12)',
+        example: 4,
+    })
+    @ApiResponse({
+        status: 200,
+        description:
+            'Order counts by day and payment method retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getOrdersByDayAndPaymentMethod(@Query('month') monthStr: string) {
+        try {
+            const month = parseInt(monthStr, 10);
+
+            if (isNaN(month) || month < 1 || month > 12) {
+                throw new Error('Month must be a number between 1 and 12');
+            }
+
+            return this.analyticsService.getOrdersByDayAndPaymentMethod(month);
+        } catch (error) {
+            this.logger.error(
+                `Error getting orders by day and payment method: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get orders by day and payment method: ' +
+                    error.message,
             );
         }
     }
