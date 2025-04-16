@@ -245,4 +245,46 @@ export class AnalyticsController {
             );
         }
     }
+
+    @Get('materials/low-stock')
+    @ApiOperation({
+        summary: 'Get materials with lowest stock [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of materials to return (default: 3)',
+        example: 3,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Low stock materials retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getLowStockMaterials(@Query('limit') limitStr?: string) {
+        try {
+            // Parse and validate limit parameter
+            let limit = 3; // Default limit
+            if (limitStr) {
+                limit = parseInt(limitStr, 10);
+                if (isNaN(limit) || limit <= 0) {
+                    throw new Error('Limit must be a positive number');
+                }
+                // Cap at a reasonable max limit
+                if (limit > 20) {
+                    limit = 20;
+                }
+            }
+
+            return this.analyticsService.getLowStockMaterials(limit);
+        } catch (error) {
+            this.logger.error(
+                `Error getting low stock materials: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get low stock materials: ' + error.message,
+            );
+        }
+    }
 }

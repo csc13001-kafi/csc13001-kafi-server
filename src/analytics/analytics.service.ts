@@ -5,6 +5,8 @@ import { UsersRepository } from 'src/users/users.repository';
 import { ProductsRepository } from 'src/products/products.repository';
 import { CategoriesRepository } from 'src/categories/categories.repository';
 import { Product } from 'src/products/entities/product.model';
+import { MaterialsRepository } from 'src/materials/materials.repository';
+
 @Injectable()
 export class AnalyticsService {
     private readonly logger = new Logger(AnalyticsService.name);
@@ -14,6 +16,7 @@ export class AnalyticsService {
         private readonly usersRepository: UsersRepository,
         private readonly productsRepository: ProductsRepository,
         private readonly categoriesRepository: CategoriesRepository,
+        private readonly materialsRepository: MaterialsRepository,
     ) {}
 
     async getOrdersCountByTimeRange(
@@ -354,6 +357,32 @@ export class AnalyticsService {
         } catch (error: any) {
             throw new Error(
                 `Failed to get orders by day and payment method: ${error.message}`,
+            );
+        }
+    }
+
+    async getLowStockMaterials(limit: number = 3): Promise<any> {
+        try {
+            const materials =
+                await this.materialsRepository.findLowestStock(limit);
+
+            return {
+                materials: materials.map((material) => ({
+                    name: material.name,
+                    currentStock: material.currentStock,
+                    originalStock: material.orginalStock,
+                    unit: material.unit,
+                    percentRemaining:
+                        Math.round(
+                            (material.currentStock / material.orginalStock) *
+                                100,
+                        ) || 0,
+                    expiredDate: material.expiredDate,
+                })),
+            };
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get low stock materials: ${error.message}`,
             );
         }
     }

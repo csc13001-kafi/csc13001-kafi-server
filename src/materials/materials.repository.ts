@@ -78,4 +78,19 @@ export class MaterialsRepository {
             throw new InternalServerErrorException((error as Error).message);
         }
     }
+
+    async findLowestStock(limit: number = 3): Promise<Material[]> {
+        try {
+            const materials = await this.materialModel.findAll({
+                order: [['currentStock', 'ASC']],
+                limit: limit,
+            });
+
+            return materials.map((material) => material.dataValues as Material);
+        } catch (error: any) {
+            throw new InternalServerErrorException(
+                `Failed to get materials with lowest stock: ${(error as Error).message}`,
+            );
+        }
+    }
 }
