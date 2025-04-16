@@ -29,7 +29,7 @@ export class AnalyticsController {
     constructor(private readonly analyticsService: AnalyticsService) {}
 
     @Get('dashboard')
-    @ApiOperation({ summary: 'Get dashboard statistics [MANAGER]' })
+    @ApiOperation({ summary: 'Get dashboard statistics [EMPLOYEE,MANAGER]' })
     @ApiResponse({
         status: 200,
         description: 'Dashboard statistics retrieved successfully',
@@ -89,27 +89,32 @@ export class AnalyticsController {
         };
     }
 
-    @Get('categories/count')
-    @ApiOperation({ summary: 'Get categories count [MANAGER, EMPLOYEE]' })
+    @Get('orders/month')
+    @ApiOperation({ summary: 'Get orders count by month [MANAGER, EMPLOYEE]' })
+    @ApiQuery({
+        name: 'month',
+        required: true,
+        type: Number,
+        description: 'Month number (1-12)',
+    })
     @ApiResponse({
         status: 200,
-        description: 'Categories count retrieved successfully',
+        description: 'Orders data for the month retrieved successfully',
     })
     @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getCategoriesCount() {
-        const count = await this.analyticsService.getCategoriesCount();
-        return { count };
-    }
+    async getOrdersByMonth(@Query('month') monthStr: string) {
+        try {
+            const month = parseInt(monthStr, 10);
 
-    @Get('products/count')
-    @ApiOperation({ summary: 'Get products count [MANAGER, EMPLOYEE]' })
-    @ApiResponse({
-        status: 200,
-        description: 'Products count retrieved successfully',
-    })
-    @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getProductsCount() {
-        const count = await this.analyticsService.getProductsCount();
-        return { count };
+            if (isNaN(month) || month < 1 || month > 12) {
+                throw new Error('Month must be a number between 1 and 12');
+            }
+
+            return this.analyticsService.getOrdersByMonth(month);
+        } catch (error) {
+            throw new BadRequestException(
+                'Failed to get orders by month: ' + error.message,
+            );
+        }
     }
 }

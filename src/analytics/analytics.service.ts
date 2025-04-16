@@ -144,4 +144,44 @@ export class AnalyticsService {
             );
         }
     }
+
+    async getOrdersByMonth(month: number): Promise<any> {
+        try {
+            if (month < 1 || month > 12) {
+                throw new Error('Month must be between 1 and 12');
+            }
+
+            const currentYear = new Date().getFullYear();
+
+            const startDate = new Date(currentYear, month - 1, 1);
+            startDate.setHours(0, 0, 0, 0);
+
+            const endDate = new Date(currentYear, month, 0);
+            endDate.setHours(23, 59, 59, 999);
+
+            const [ordersCount, ordersTotalPrice] = await Promise.all([
+                this.getOrdersCountByTimeRange(startDate, endDate),
+                this.getOrdersTotalPriceByTimeRange(startDate, endDate),
+            ]);
+
+            const timeZoneOffset = new Date().getTimezoneOffset() * 60000;
+            const localStartDate = new Date(
+                startDate.getTime() - timeZoneOffset,
+            );
+            const localEndDate = new Date(endDate.getTime() - timeZoneOffset);
+
+            return {
+                month: month,
+                monthName: startDate.toLocaleString('en-US', { month: 'long' }),
+                ordersCount,
+                ordersTotalPrice,
+                timeRange: {
+                    startDate: localStartDate,
+                    endDate: localEndDate,
+                },
+            };
+        } catch (error: any) {
+            throw new Error(`Failed to get orders by month: ${error.message}`);
+        }
+    }
 }
