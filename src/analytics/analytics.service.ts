@@ -215,4 +215,83 @@ export class AnalyticsService {
             );
         }
     }
+
+    async getTopSellingProducts(
+        limit: number = 10,
+        startDateStr?: string,
+        endDateStr?: string,
+    ): Promise<any> {
+        try {
+            let startDate: Date | undefined;
+            let endDate: Date | undefined;
+
+            if (startDateStr && endDateStr) {
+                startDate = new Date(startDateStr);
+                endDate = new Date(endDateStr);
+
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    throw new Error(
+                        'Invalid date format. Please use YYYY-MM-DD format.',
+                    );
+                }
+
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999);
+
+                const currentYear = new Date().getFullYear();
+                if (startDate.getFullYear() !== currentYear) {
+                    startDate.setFullYear(currentYear);
+                }
+                if (endDate.getFullYear() !== currentYear) {
+                    endDate.setFullYear(currentYear);
+                }
+            }
+
+            const topProducts: {
+                productId: string;
+                quantity: number;
+                productName?: string;
+            }[] = await this.ordersRepository.getTopSellingProducts(
+                limit,
+                startDate,
+                endDate,
+            );
+
+            if (topProducts.length > 0) {
+                const products = await this.productsRepository.findAll();
+                for (const product of topProducts) {
+                    const matchingProduct = products.find(
+                        (p) => p.id === product.productId,
+                    );
+                    product.productName = matchingProduct.name;
+                    delete product.productId;
+                }
+                return {
+                    timeRange:
+                        startDate && endDate
+                            ? {
+                                  startDate: startDate.toLocaleDateString(),
+                                  endDate: endDate.toLocaleDateString(),
+                              }
+                            : 'All time',
+                    topProducts: topProducts,
+                };
+            }
+
+            return {
+                timeRange:
+                    startDate && endDate
+                        ? {
+                              startDate: startDate.toLocaleDateString(),
+                              endDate: endDate.toLocaleDateString(),
+                          }
+                        : 'All time',
+                topProducts: [],
+            };
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get top selling products: ${error.message}`,
+            );
+        }
+    }
 }

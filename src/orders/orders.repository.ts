@@ -233,4 +233,67 @@ export class OrdersRepository {
             );
         }
     }
+
+    async getTopSellingProducts(
+        limit: number = 10,
+        startDate?: Date,
+        endDate?: Date,
+    ): Promise<{ productId: string; quantity: number }[]> {
+        try {
+            const whereClause: any = {};
+            if (startDate && endDate) {
+                whereClause.time = {
+                    [Op.between]: [startDate, endDate],
+                };
+            }
+
+            const orders = await this.orderModel.findAll({
+                attributes: ['id'],
+                where: whereClause,
+                raw: true,
+            });
+
+            const orderIds = orders.map((order) => order.id);
+
+            if (orderIds.length === 0) {
+                return [];
+            }
+
+            const orderDetails = await this.orderDetailsModel.findAll({
+                attributes: [
+                    'productId',
+                    [
+                        this.orderDetailsModel.sequelize.fn(
+                            'SUM',
+                            this.orderDetailsModel.sequelize.col('quantity'),
+                        ),
+                        'totalQuantity',
+                    ],
+                ],
+                where: {
+                    orderId: {
+                        [Op.in]: orderIds,
+                    },
+                },
+                group: ['productId'],
+                order: [
+                    [
+                        this.orderDetailsModel.sequelize.fn(
+                            'SUM',
+                            this.orderDetailsModel.sequelize.col('quantity'),
+                        ),
+                        'DESC',
+                    ],
+                ],
+                limit: limit,
+                raw: true,
+            });
+
+            return orderDetails;
+        } catch (error: any) {
+            throw new InternalServerErrorException(
+                `Failed to get top selling products: ${error.message}`,
+            );
+        }
+    }
 }

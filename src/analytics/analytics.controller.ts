@@ -150,4 +150,90 @@ export class AnalyticsController {
             );
         }
     }
+
+    @Get('products/top-selling')
+    @ApiOperation({
+        summary: 'Get top selling products by quantity [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of products to return (default: 10)',
+        example: 10,
+    })
+    @ApiQuery({
+        name: 'startDate',
+        required: false,
+        type: String,
+        description: 'Start date in YYYY-MM-DD format',
+        example: '2024-01-01',
+    })
+    @ApiQuery({
+        name: 'endDate',
+        required: false,
+        type: String,
+        description: 'End date in YYYY-MM-DD format',
+        example: '2024-12-31',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Top selling products retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getTopSellingProducts(
+        @Query('limit') limitStr?: string,
+        @Query('startDate') startDateStr?: string,
+        @Query('endDate') endDateStr?: string,
+    ) {
+        try {
+            // Parse and validate limit parameter
+            let limit = 10; // Default limit
+            if (limitStr) {
+                limit = parseInt(limitStr, 10);
+                if (isNaN(limit) || limit <= 0) {
+                    throw new Error('Limit must be a positive number');
+                }
+                // Cap at a reasonable max limit
+                if (limit > 100) {
+                    limit = 100;
+                }
+            }
+
+            // Validate date parameters
+            if (
+                (startDateStr && !endDateStr) ||
+                (!startDateStr && endDateStr)
+            ) {
+                throw new Error(
+                    'Both startDate and endDate must be provided together',
+                );
+            }
+
+            // If dates are provided, validate format
+            if (startDateStr && endDateStr) {
+                if (
+                    !/^\d{4}-\d{2}-\d{2}$/.test(startDateStr) ||
+                    !/^\d{4}-\d{2}-\d{2}$/.test(endDateStr)
+                ) {
+                    throw new Error(
+                        'Invalid date format. Please use YYYY-MM-DD format.',
+                    );
+                }
+            }
+
+            return this.analyticsService.getTopSellingProducts(
+                limit,
+                startDateStr,
+                endDateStr,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error getting top selling products: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get top selling products: ' + error.message,
+            );
+        }
+    }
 }
