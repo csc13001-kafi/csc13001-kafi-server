@@ -184,4 +184,35 @@ export class AnalyticsService {
             throw new Error(`Failed to get orders by month: ${error.message}`);
         }
     }
+
+    async getHourlySalesData(dateStr: string): Promise<any> {
+        try {
+            const date = new Date(dateStr);
+
+            if (isNaN(date.getTime())) {
+                throw new Error(
+                    'Invalid date format. Please use YYYY-MM-DD format.',
+                );
+            }
+
+            const hourlySalesData =
+                await this.ordersRepository.getHourlySalesData(date);
+
+            const formattedDate = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+
+            return {
+                date: formattedDate,
+                rawDate: date.toISOString().split('T')[0],
+                hourlySales: hourlySalesData,
+            };
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get hourly sales data: ${error.message}`,
+            );
+        }
+    }
 }

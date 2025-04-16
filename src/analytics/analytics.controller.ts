@@ -117,4 +117,37 @@ export class AnalyticsController {
             );
         }
     }
+
+    @Get('orders/hours')
+    @ApiOperation({
+        summary:
+            'Get hourly sales data for a specific date [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'date',
+        required: true,
+        type: String,
+        description: 'Date in YYYY-MM-DD format',
+        example: '2024-04-15',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Hourly sales data retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getHourlySalesData(@Query('date') dateStr: string) {
+        try {
+            if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                throw new Error(
+                    'Invalid date format. Please use YYYY-MM-DD format.',
+                );
+            }
+
+            return this.analyticsService.getHourlySalesData(dateStr);
+        } catch (error) {
+            throw new BadRequestException(
+                'Failed to get hourly sales data: ' + error.message,
+            );
+        }
+    }
 }

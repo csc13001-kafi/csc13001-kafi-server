@@ -182,4 +182,55 @@ export class OrdersRepository {
         });
         return totalPrice;
     }
+
+    async getHourlySalesData(
+        date: Date,
+    ): Promise<{ hour: number; totalPrice: number }[]> {
+        try {
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+
+            const orders = await this.orderModel.findAll({
+                attributes: ['time', 'afterDiscountPrice'],
+                where: {
+                    time: {
+                        [Op.between]: [startDate, endDate],
+                    },
+                },
+                raw: true,
+            });
+
+            const hourlySales = {};
+            const openHours = 0;
+            const closeHours = 23;
+            for (let hour = openHours; hour <= closeHours; hour++) {
+                hourlySales[hour] = 0;
+            }
+
+            orders.forEach((order) => {
+                const orderTime = new Date(order.time);
+                const hour = orderTime.getHours();
+
+                if (hour >= openHours && hour <= closeHours) {
+                    hourlySales[hour] += Number(order.afterDiscountPrice);
+                }
+            });
+
+            const result = Object.entries(hourlySales).map(
+                ([hour, totalPrice]) => ({
+                    hour: parseInt(hour),
+                    totalPrice: Number(totalPrice),
+                }),
+            );
+
+            return result;
+        } catch (error: any) {
+            throw new InternalServerErrorException(
+                `Failed to get hourly sales: ${error.message}`,
+            );
+        }
+    }
 }
