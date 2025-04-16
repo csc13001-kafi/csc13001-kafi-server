@@ -10,11 +10,16 @@ import { Role } from '../auth/enums/roles.enum';
 import { UpdateEmployeeDto, UpdateProfileDto } from './dtos/update-user.dto';
 import type { Multer } from 'multer';
 import { UploadService } from '../uploader/upload.service';
+import { FeedbackDto } from './dtos/feedback.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class UsersService {
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly uploadService: UploadService,
+        private readonly mailerService: MailerService,
+        private readonly configService: ConfigService,
     ) {}
 
     async createEmployee(createEmployeeDto: CreateEmployeeDto): Promise<User> {
@@ -136,5 +141,53 @@ export class UsersService {
             message: 'Profile image uploaded successfully',
             user: newUser,
         };
+    }
+
+    async sendFeedback(feedbackDto: FeedbackDto): Promise<{ message: string }> {
+        try {
+            const { name, email, message, phone } = feedbackDto;
+
+            const adminEmail = this.configService.get('MEDIATOR_EMAIL');
+
+            await this.mailerService.sendMail({
+                to: adminEmail,
+                subject: `[Customer Feedback] From customer ${name}`,
+                text: `
+New feedback received from customer:
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
+
+Message:
+${message}
+
+This is an automated message from the Kafi POS System.
+                `,
+            });
+
+            // Send confirmation to the customer
+            await this.mailerService.sendMail({
+                to: email,
+                subject: 'Thank you for your feedback - Kafi',
+                text: `
+Dear ${name},
+
+Thank you for taking the time to provide us with your feedback. We greatly appreciate your input as it helps us improve our services.
+
+Your feedback has been received and will be reviewed by our team. If necessary, we will contact you for further information.
+
+Best regards,
+The Kafi Team
+                `,
+            });
+
+            return { message: 'Feedback sent successfully' };
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Error sending feedback',
+                error.message,
+            );
+        }
     }
 }
