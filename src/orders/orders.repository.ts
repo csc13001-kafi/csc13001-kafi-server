@@ -172,4 +172,14 @@ export class OrdersRepository {
         });
         return count;
     }
+
+    async getTotalPriceByTimeRange(
+        startDate: Date,
+        endDate: Date,
+    ): Promise<number> {
+        const totalPrice = await this.orderModel.sum('afterDiscountPrice', {
+            where: { time: { [Op.between]: [startDate, endDate] } },
+        });
+        return totalPrice;
+    }
 }

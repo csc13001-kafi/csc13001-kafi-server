@@ -1,4 +1,10 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Query,
+    UseGuards,
+    BadRequestException,
+} from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import {
     ApiOperation,
@@ -12,11 +18,14 @@ import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { TimeRangeDto } from './dtos/time-range.dto';
 import { DashboardStatsDto } from './dtos/dashboard-stats.dto';
+import { Logger } from '@nestjs/common';
 
 @Controller('analytics')
 @UseGuards(ATAuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 export class AnalyticsController {
+    private readonly logger = new Logger(AnalyticsController.name);
+
     constructor(private readonly analyticsService: AnalyticsService) {}
 
     @Get('dashboard')
@@ -26,38 +35,27 @@ export class AnalyticsController {
         description: 'Dashboard statistics retrieved successfully',
         type: DashboardStatsDto,
     })
-    @Roles(Role.MANAGER)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
     async getDashboardStats(@Query() timeRangeDto: TimeRangeDto) {
-        const startDate = new Date(timeRangeDto.startDate);
-        const endDate = new Date(timeRangeDto.endDate);
+        try {
+            const parsedDate = new Date(timeRangeDto.filterDate);
 
-        // Ensure endDate is set to end of day
-        endDate.setHours(23, 59, 59, 999);
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error('Invalid date format');
+            }
 
-        return this.analyticsService.getDashboardStats(startDate, endDate);
-    }
+            const startDate = new Date(parsedDate);
+            startDate.setHours(0, 0, 0, 0);
 
-    @Get('orders/count')
-    @ApiOperation({
-        summary: 'Get orders count by time range [MANAGER, EMPLOYEE]',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Orders count retrieved successfully',
-    })
-    @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getOrdersCount(@Query() timeRangeDto: TimeRangeDto) {
-        const startDate = new Date(timeRangeDto.startDate);
-        const endDate = new Date(timeRangeDto.endDate);
+            const endDate = new Date(parsedDate);
+            endDate.setHours(23, 59, 59, 999);
 
-        // Ensure endDate is set to end of day
-        endDate.setHours(23, 59, 59, 999);
-
-        const count = await this.analyticsService.getOrdersCountByTimeRange(
-            startDate,
-            endDate,
-        );
-        return { count, timeRange: { startDate, endDate } };
+            return this.analyticsService.getDashboardStats(startDate, endDate);
+        } catch (error) {
+            throw new BadRequestException(
+                'Failed to get dashboard statistics: ' + error.message,
+            );
+        }
     }
 
     @Get('users/count')

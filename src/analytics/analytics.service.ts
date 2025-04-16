@@ -25,11 +25,26 @@ export class AnalyticsService {
                 startDate,
                 endDate,
             );
-        } catch (error) {
-            this.logger.error(
-                `Error in orders count service: ${error.message}`,
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get orders count by time range: ${error.message}`,
             );
-            throw new Error('Failed to get orders count by time range');
+        }
+    }
+
+    async getOrdersTotalPriceByTimeRange(
+        startDate: Date,
+        endDate: Date,
+    ): Promise<number> {
+        try {
+            return await this.ordersRepository.getTotalPriceByTimeRange(
+                startDate,
+                endDate,
+            );
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get orders total price by time range: ${error.message}`,
+            );
         }
     }
 
@@ -65,48 +80,68 @@ export class AnalyticsService {
     async getProductsCount(): Promise<number> {
         try {
             return await this.productsRepository.countProducts();
-        } catch (error) {
-            this.logger.error(
-                `Error in products count service: ${error.message}`,
-            );
-            throw new Error('Failed to get products count');
+        } catch (error: any) {
+            throw new Error(`Failed to get products count: ${error.message}`);
         }
     }
 
     async getDashboardStats(startDate: Date, endDate: Date): Promise<any> {
         try {
-            // Business logic: Get all stats in parallel for efficiency
+            const localStartDate = new Date(startDate);
+            const localEndDate = new Date(endDate);
+
+            const currentYear = new Date().getFullYear();
+            if (localStartDate.getFullYear() !== currentYear) {
+                localStartDate.setFullYear(currentYear);
+            }
+            if (localEndDate.getFullYear() !== currentYear) {
+                localEndDate.setFullYear(currentYear);
+            }
+
             const [
                 ordersCount,
+                ordersTotalPrice,
                 categoriesCount,
-                employeesCount,
-                managersCount,
                 productsCount,
+                customersCount,
             ] = await Promise.all([
-                this.getOrdersCountByTimeRange(startDate, endDate),
+                this.getOrdersCountByTimeRange(localStartDate, localEndDate),
+                this.getOrdersTotalPriceByTimeRange(
+                    localStartDate,
+                    localEndDate,
+                ),
                 this.getCategoriesCount(),
-                this.getUsersCountByRole(Role.EMPLOYEE),
-                this.getUsersCountByRole(Role.MANAGER),
                 this.getProductsCount(),
+                this.getUsersCountByRole(Role.GUEST),
             ]);
 
-            // Business logic: Format the response data
+            const timeZoneOffset = new Date().getTimezoneOffset() * 60000;
+            const localStartDateFormatted = new Date(
+                localStartDate.getTime() - timeZoneOffset,
+            );
+            const localEndDateFormatted = new Date(
+                localEndDate.getTime() - timeZoneOffset,
+            );
+
             return {
-                ordersCount,
-                categoriesCount,
-                employeesCount,
-                managersCount,
-                productsCount,
+                Overview: {
+                    ordersCount,
+                    ordersTotalPrice,
+                },
+                Product: {
+                    categoriesCount,
+                    productsCount,
+                },
+                Membership: customersCount,
                 timeRange: {
-                    startDate,
-                    endDate,
+                    startDate: localStartDateFormatted,
+                    endDate: localEndDateFormatted,
                 },
             };
-        } catch (error) {
-            this.logger.error(
-                `Error in dashboard stats service: ${error.message}`,
+        } catch (error: any) {
+            throw new Error(
+                `Failed to get dashboard statistics: ${error.message}`,
             );
-            throw new Error('Failed to get dashboard statistics');
         }
     }
 }
