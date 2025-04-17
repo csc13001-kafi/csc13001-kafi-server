@@ -1,4 +1,10 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Query,
+    UseGuards,
+    BadRequestException,
+} from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import {
     ApiOperation,
@@ -12,52 +18,44 @@ import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { TimeRangeDto } from './dtos/time-range.dto';
 import { DashboardStatsDto } from './dtos/dashboard-stats.dto';
+import { Logger } from '@nestjs/common';
 
 @Controller('analytics')
 @UseGuards(ATAuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 export class AnalyticsController {
+    private readonly logger = new Logger(AnalyticsController.name);
+
     constructor(private readonly analyticsService: AnalyticsService) {}
 
     @Get('dashboard')
-    @ApiOperation({ summary: 'Get dashboard statistics [MANAGER]' })
+    @ApiOperation({ summary: 'Get dashboard statistics [EMPLOYEE,MANAGER]' })
     @ApiResponse({
         status: 200,
         description: 'Dashboard statistics retrieved successfully',
         type: DashboardStatsDto,
     })
-    @Roles(Role.MANAGER)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
     async getDashboardStats(@Query() timeRangeDto: TimeRangeDto) {
-        const startDate = new Date(timeRangeDto.startDate);
-        const endDate = new Date(timeRangeDto.endDate);
+        try {
+            const parsedDate = new Date(timeRangeDto.filterDate);
 
-        // Ensure endDate is set to end of day
-        endDate.setHours(23, 59, 59, 999);
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error('Invalid date format');
+            }
 
-        return this.analyticsService.getDashboardStats(startDate, endDate);
-    }
+            const startDate = new Date(parsedDate);
+            startDate.setHours(0, 0, 0, 0);
 
-    @Get('orders/count')
-    @ApiOperation({
-        summary: 'Get orders count by time range [MANAGER, EMPLOYEE]',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Orders count retrieved successfully',
-    })
-    @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getOrdersCount(@Query() timeRangeDto: TimeRangeDto) {
-        const startDate = new Date(timeRangeDto.startDate);
-        const endDate = new Date(timeRangeDto.endDate);
+            const endDate = new Date(parsedDate);
+            endDate.setHours(23, 59, 59, 999);
 
-        // Ensure endDate is set to end of day
-        endDate.setHours(23, 59, 59, 999);
-
-        const count = await this.analyticsService.getOrdersCountByTimeRange(
-            startDate,
-            endDate,
-        );
-        return { count, timeRange: { startDate, endDate } };
+            return this.analyticsService.getDashboardStats(startDate, endDate);
+        } catch (error) {
+            throw new BadRequestException(
+                'Failed to get dashboard statistics: ' + error.message,
+            );
+        }
     }
 
     @Get('users/count')
@@ -91,27 +89,202 @@ export class AnalyticsController {
         };
     }
 
-    @Get('categories/count')
-    @ApiOperation({ summary: 'Get categories count [MANAGER, EMPLOYEE]' })
+    @Get('orders/hours')
+    @ApiOperation({
+        summary:
+            'Get hourly sales data for a specific date [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'date',
+        required: true,
+        type: String,
+        description: 'Date in YYYY-MM-DD format',
+        example: '2024-04-15',
+    })
     @ApiResponse({
         status: 200,
-        description: 'Categories count retrieved successfully',
+        description: 'Hourly sales data retrieved successfully',
     })
     @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getCategoriesCount() {
-        const count = await this.analyticsService.getCategoriesCount();
-        return { count };
+    async getHourlySalesData(@Query('date') dateStr: string) {
+        try {
+            if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                throw new Error(
+                    'Invalid date format. Please use YYYY-MM-DD format.',
+                );
+            }
+
+            return this.analyticsService.getHourlySalesData(dateStr);
+        } catch (error) {
+            throw new BadRequestException(
+                'Failed to get hourly sales data: ' + error.message,
+            );
+        }
     }
 
-    @Get('products/count')
-    @ApiOperation({ summary: 'Get products count [MANAGER, EMPLOYEE]' })
+    @Get('products/top-selling')
+    @ApiOperation({
+        summary: 'Get top selling products by quantity [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of products to return (default: 10)',
+        example: 10,
+    })
+    @ApiQuery({
+        name: 'startDate',
+        required: false,
+        type: String,
+        description: 'Start date in YYYY-MM-DD format',
+        example: '2024-01-01',
+    })
+    @ApiQuery({
+        name: 'endDate',
+        required: false,
+        type: String,
+        description: 'End date in YYYY-MM-DD format',
+        example: '2024-12-31',
+    })
     @ApiResponse({
         status: 200,
-        description: 'Products count retrieved successfully',
+        description: 'Top selling products retrieved successfully',
     })
     @Roles(Role.MANAGER, Role.EMPLOYEE)
-    async getProductsCount() {
-        const count = await this.analyticsService.getProductsCount();
-        return { count };
+    async getTopSellingProducts(
+        @Query('limit') limitStr?: string,
+        @Query('startDate') startDateStr?: string,
+        @Query('endDate') endDateStr?: string,
+    ) {
+        try {
+            // Parse and validate limit parameter
+            let limit = 10; // Default limit
+            if (limitStr) {
+                limit = parseInt(limitStr, 10);
+                if (isNaN(limit) || limit <= 0) {
+                    throw new Error('Limit must be a positive number');
+                }
+                // Cap at a reasonable max limit
+                if (limit > 100) {
+                    limit = 100;
+                }
+            }
+
+            // Validate date parameters
+            if (
+                (startDateStr && !endDateStr) ||
+                (!startDateStr && endDateStr)
+            ) {
+                throw new Error(
+                    'Both startDate and endDate must be provided together',
+                );
+            }
+
+            // If dates are provided, validate format
+            if (startDateStr && endDateStr) {
+                if (
+                    !/^\d{4}-\d{2}-\d{2}$/.test(startDateStr) ||
+                    !/^\d{4}-\d{2}-\d{2}$/.test(endDateStr)
+                ) {
+                    throw new Error(
+                        'Invalid date format. Please use YYYY-MM-DD format.',
+                    );
+                }
+            }
+
+            return this.analyticsService.getTopSellingProducts(
+                limit,
+                startDateStr,
+                endDateStr,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error getting top selling products: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get top selling products: ' + error.message,
+            );
+        }
+    }
+
+    @Get('orders/months')
+    @ApiOperation({
+        summary:
+            'Get order counts by day and payment method for a specific month [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'month',
+        required: true,
+        type: Number,
+        description: 'Month number (1-12)',
+        example: 4,
+    })
+    @ApiResponse({
+        status: 200,
+        description:
+            'Order counts by day and payment method retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getOrdersByDayAndPaymentMethod(@Query('month') monthStr: string) {
+        try {
+            const month = parseInt(monthStr, 10);
+
+            if (isNaN(month) || month < 1 || month > 12) {
+                throw new Error('Month must be a number between 1 and 12');
+            }
+
+            return this.analyticsService.getOrdersByDayAndPaymentMethod(month);
+        } catch (error) {
+            this.logger.error(
+                `Error getting orders by day and payment method: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get orders by day and payment method: ' +
+                    error.message,
+            );
+        }
+    }
+
+    @Get('materials/low-stock')
+    @ApiOperation({
+        summary: 'Get materials with lowest stock [MANAGER, EMPLOYEE]',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of materials to return (default: 3)',
+        example: 3,
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Low stock materials retrieved successfully',
+    })
+    @Roles(Role.MANAGER, Role.EMPLOYEE)
+    async getLowStockMaterials(@Query('limit') limitStr?: string) {
+        try {
+            // Parse and validate limit parameter
+            let limit = 3; // Default limit
+            if (limitStr) {
+                limit = parseInt(limitStr, 10);
+                if (isNaN(limit) || limit <= 0) {
+                    throw new Error('Limit must be a positive number');
+                }
+                // Cap at a reasonable max limit
+                if (limit > 20) {
+                    limit = 20;
+                }
+            }
+
+            return this.analyticsService.getLowStockMaterials(limit);
+        } catch (error) {
+            this.logger.error(
+                `Error getting low stock materials: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to get low stock materials: ' + error.message,
+            );
+        }
     }
 }
