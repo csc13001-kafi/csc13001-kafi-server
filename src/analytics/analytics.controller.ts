@@ -16,7 +16,7 @@ import { Role } from '../auth/enums/roles.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { TimeRangeDto } from './dtos/time-range.dto';
+import { TimeRangeDto, TimeRangeOption } from './dtos/time-range.dto';
 import { DashboardStatsDto } from './dtos/dashboard-stats.dto';
 import { Logger } from '@nestjs/common';
 
@@ -38,19 +38,9 @@ export class AnalyticsController {
     @Roles(Role.EMPLOYEE, Role.MANAGER)
     async getDashboardStats(@Query() timeRangeDto: TimeRangeDto) {
         try {
-            const parsedDate = new Date(timeRangeDto.filterDate);
-
-            if (isNaN(parsedDate.getTime())) {
-                throw new Error('Invalid date format');
-            }
-
-            const startDate = new Date(parsedDate);
-            startDate.setHours(0, 0, 0, 0);
-
-            const endDate = new Date(parsedDate);
-            endDate.setHours(23, 59, 59, 999);
-
-            return this.analyticsService.getDashboardStats(startDate, endDate);
+            return await this.analyticsService.getDashboardStatsByTimeRange(
+                timeRangeDto.timeRange,
+            );
         } catch (error) {
             throw new BadRequestException(
                 'Failed to get dashboard statistics: ' + error.message,
