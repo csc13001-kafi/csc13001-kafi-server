@@ -16,7 +16,7 @@ import { Role } from '../auth/enums/roles.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { TimeRangeDto, TimeRangeOption } from './dtos/time-range.dto';
+import { TimeRangeDto } from './dtos/time-range.dto';
 import { DashboardStatsDto } from './dtos/dashboard-stats.dto';
 import { Logger } from '@nestjs/common';
 

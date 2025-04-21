@@ -12,7 +12,6 @@ import { Reflector } from '@nestjs/core';
 describe('CategoriesController', () => {
     let controller: CategoriesController;
     let service: CategoriesService;
-    let accessControlService: AccessControlService;
 
     // Mock CategoriesService
     const mockCategoriesService = {
@@ -84,8 +83,6 @@ describe('CategoriesController', () => {
 
         controller = module.get<CategoriesController>(CategoriesController);
         service = module.get<CategoriesService>(CategoriesService);
-        accessControlService =
-            module.get<AccessControlService>(AccessControlService);
 
         // Reset all mocks
         jest.clearAllMocks();

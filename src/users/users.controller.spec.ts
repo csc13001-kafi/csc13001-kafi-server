@@ -10,7 +10,6 @@ import { AccessControlService } from '../ac/ac.service';
 
 describe('UsersController', () => {
     let controller: UsersController;
-    let accessControlService: AccessControlService;
     // Mock user data
     const mockUsers = [
         {

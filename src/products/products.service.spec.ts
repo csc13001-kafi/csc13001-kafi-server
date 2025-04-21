@@ -11,7 +11,6 @@ import type { Multer } from 'multer';
 describe('ProductsService', () => {
     let service: ProductsService;
     let productsRepository: ProductsRepository;
-    let categoriesRepository: CategoriesRepository;
     let uploadService: UploadService;
 
     // Mock repositories
@@ -70,8 +69,6 @@ describe('ProductsService', () => {
 
         service = module.get<ProductsService>(ProductsService);
         productsRepository = module.get<ProductsRepository>(ProductsRepository);
-        categoriesRepository =
-            module.get<CategoriesRepository>(CategoriesRepository);
         uploadService = module.get<UploadService>(UploadService);
 
         // Reset all mocks

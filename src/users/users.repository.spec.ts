@@ -40,9 +40,6 @@ class MockRedisModule {}
 
 describe('UsersRepository', () => {
     let repository: UsersRepository;
-    let configService: ConfigService;
-    let mailerService: MailerService;
-
     // Mock User model
     const mockUserModel = {
         findOne: jest.fn(),
@@ -115,8 +112,6 @@ describe('UsersRepository', () => {
         }).compile();
 
         repository = module.get<UsersRepository>(UsersRepository);
-        configService = module.get<ConfigService>(ConfigService);
-        mailerService = module.get<MailerService>(MailerService);
 
         // Reset all mocks
         jest.clearAllMocks();

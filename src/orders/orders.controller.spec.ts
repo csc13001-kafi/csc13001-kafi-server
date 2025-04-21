@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dtos/create-order.dto';
 import { PaymentMethod } from './enums/payment-method.enum';
 import { JwtService } from '@nestjs/jwt';
 import { ATAuthGuard } from '../auth/guards/at-auth.guard';

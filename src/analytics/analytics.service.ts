@@ -33,15 +33,15 @@ export class AnalyticsService {
                 startDate.setHours(0, 0, 0, 0);
                 endDate.setHours(23, 59, 59, 999);
                 break;
-            case TimeRangeOption.THIS_WEEK:
+            case TimeRangeOption.THIS_WEEK: {
                 const dayOfWeek = now.getDay();
-                // Adjust to Monday as first day of week
                 const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                 startDate = new Date(now);
                 startDate.setDate(now.getDate() - diffToMonday);
                 startDate.setHours(0, 0, 0, 0);
                 endDate.setHours(23, 59, 59, 999);
                 break;
+            }
             case TimeRangeOption.THIS_MONTH:
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);

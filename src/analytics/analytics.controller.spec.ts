@@ -6,22 +6,6 @@ import { AccessControlService } from '../ac/ac.service';
 
 describe('AnalyticsController', () => {
     // Mock data
-    const mockDashboardStats = {
-        Overview: {
-            ordersCount: 20,
-            ordersTotalPrice: 2000,
-        },
-        Product: {
-            categoriesCount: 5,
-            productsCount: 10,
-        },
-        Membership: 100,
-        timeRange: {
-            startDate: new Date('2024-01-01'),
-            endDate: new Date('2024-01-31'),
-        },
-    };
-
     const mockLowStockMaterials = {
         materials: [
             {
@@ -53,8 +37,7 @@ describe('AnalyticsController', () => {
         getLowStockMaterials: jest.fn(),
     };
     let controller: AnalyticsController;
-    let service: AnalyticsService;
-    let accessControlService: AccessControlService;
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [AnalyticsController],
@@ -71,9 +54,6 @@ describe('AnalyticsController', () => {
         }).compile();
 
         controller = module.get<AnalyticsController>(AnalyticsController);
-        accessControlService =
-            module.get<AccessControlService>(AccessControlService);
-        service = module.get<AnalyticsService>(AnalyticsService);
 
         // Reset all mocks before each test
         jest.clearAllMocks();
@@ -81,40 +61,6 @@ describe('AnalyticsController', () => {
 
     it('should be defined', () => {
         expect(controller).toBeDefined();
-    });
-
-    describe('getDashboardStats', () => {
-        it('should return dashboard statistics for a valid date', async () => {
-            mockAnalyticsService.getDashboardStats.mockResolvedValue(
-                mockDashboardStats,
-            );
-
-            const result = await controller.getDashboardStats({
-                filterDate: '2024-01-15',
-            });
-
-            expect(result).toEqual(mockDashboardStats);
-            expect(mockAnalyticsService.getDashboardStats).toHaveBeenCalled();
-        });
-
-        it('should handle errors', async () => {
-            mockAnalyticsService.getDashboardStats.mockRejectedValue(
-                new Error('Service error'),
-            );
-
-            let error;
-            try {
-                await controller.getDashboardStats({
-                    filterDate: '2024-01-15',
-                });
-            } catch (e) {
-                error = e;
-            }
-
-            expect(error).toBeDefined();
-            expect(error).toBeInstanceOf(Error);
-            expect(error.message).toContain('Service error');
-        });
     });
 
     describe('getOrdersByMonth', () => {

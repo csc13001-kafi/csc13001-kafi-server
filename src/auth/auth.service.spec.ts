@@ -20,7 +20,6 @@ describe('AuthService', () => {
     let configService: jest.Mocked<Partial<ConfigService>>;
     let mailerService: jest.Mocked<Partial<MailerService>>;
 
-    // @ts-ignore - mock user doesn't need to match full User entity type for testing
     const mockUser = {
         id: 'user-id-1',
         email: 'test@example.com',
@@ -84,7 +83,7 @@ describe('AuthService', () => {
 
     describe('validateUser', () => {
         it('should return user if credentials are valid', async () => {
-            // @ts-ignore - mock doesn't need to match full User type
+            // @ts-expect-error - mock doesn't need to match full User type
             usersRepository.findOneByEmail.mockResolvedValue(mockUser);
             usersRepository.validatePassword.mockResolvedValue(true);
 
@@ -116,7 +115,7 @@ describe('AuthService', () => {
         });
 
         it('should return null if password is invalid', async () => {
-            // @ts-ignore - mock doesn't need to match full User type
+            // @ts-expect-error - mock doesn't need to match full User type
             usersRepository.findOneByEmail.mockResolvedValue(mockUser);
             usersRepository.validatePassword.mockResolvedValue(false);
 
@@ -199,7 +198,7 @@ describe('AuthService', () => {
             };
 
             usersRepository.findOneByEmail.mockResolvedValue(null);
-            // @ts-ignore - mock return value doesn't need full User properties
+            // @ts-expect-error - mock return value doesn't need full User properties
             usersRepository.createCustomer.mockResolvedValue({
                 id: 'new-user-id',
                 username: signUpDto.username,
@@ -238,7 +237,7 @@ describe('AuthService', () => {
                 phone: '9876543210',
             };
 
-            // @ts-ignore - mock doesn't need to match full User type
+            // @ts-expect-error - mock doesn't need to match full User type
             usersRepository.findOneByEmail.mockResolvedValue(mockUser);
 
             await expect(service.signUp(signUpDto)).rejects.toThrow(
@@ -284,7 +283,7 @@ describe('AuthService', () => {
                 refreshToken,
             );
             jwtService.verify.mockReturnValue(decodedToken);
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneByEmail.mockResolvedValue(mockUser);
             jwtService.signAsync.mockResolvedValue('new-access-token');
             configService.get.mockReturnValue('at-secret');
@@ -385,7 +384,7 @@ describe('AuthService', () => {
 
     describe('forgotPassword', () => {
         it('should generate OTP and send email for valid user', async () => {
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneByEmail.mockResolvedValue(mockUser);
 
             // Mock Math.random
@@ -424,7 +423,7 @@ describe('AuthService', () => {
                 otpExpiry: new Date(Date.now() + 900000), // 15 minutes in the future
             };
 
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneByOtp.mockResolvedValue(userWithOtp);
 
             await service.verifyOtp(mockUser.email, '123456');
@@ -453,7 +452,7 @@ describe('AuthService', () => {
                 otpExpiry: new Date(Date.now() - 900000), // 15 minutes in the past
             };
 
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneByOtp.mockResolvedValue(userWithExpiredOtp);
 
             await expect(
@@ -467,7 +466,7 @@ describe('AuthService', () => {
 
     describe('changePassword', () => {
         it('should change password with valid credentials', async () => {
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneById.mockResolvedValue(mockUser);
             usersRepository.validatePassword.mockResolvedValue(true);
             usersRepository.hashPassword.mockResolvedValue(
@@ -522,7 +521,7 @@ describe('AuthService', () => {
         });
 
         it('should throw BadRequestException if old password is invalid', async () => {
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneById.mockResolvedValue(mockUser);
             usersRepository.validatePassword.mockResolvedValue(false);
 
@@ -548,7 +547,7 @@ describe('AuthService', () => {
         });
 
         it('should throw BadRequestException if passwords do not match', async () => {
-            // @ts-ignore - mock doesn't need full User properties
+            // @ts-expect-error - mock doesn't need full User properties
             usersRepository.findOneById.mockResolvedValue(mockUser);
             usersRepository.validatePassword.mockResolvedValue(true);
 

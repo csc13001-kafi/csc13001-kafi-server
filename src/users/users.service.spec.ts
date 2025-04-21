@@ -12,10 +12,6 @@ import { FeedbackDto } from './dtos/feedback.dto';
 
 describe('UsersService', () => {
     let service: UsersService;
-    let usersRepository: UsersRepository;
-    let uploadService: UploadService;
-    let mailerService: MailerService;
-    let configService: ConfigService;
 
     // Mock user data
     const mockUser = {
@@ -92,10 +88,6 @@ describe('UsersService', () => {
         }).compile();
 
         service = module.get<UsersService>(UsersService);
-        usersRepository = module.get<UsersRepository>(UsersRepository);
-        uploadService = module.get<UploadService>(UploadService);
-        mailerService = module.get<MailerService>(MailerService);
-        configService = module.get<ConfigService>(ConfigService);
 
         // Reset all mocks
         jest.clearAllMocks();

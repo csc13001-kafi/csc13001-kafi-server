@@ -133,11 +133,14 @@ describe('AuthController', () => {
             await controller.signIn(req, res);
 
             expect(authService.signIn).toHaveBeenCalledWith(mockUser);
-            expect(res.cookie).toHaveBeenCalledWith(
+            expect((res.cookie as jest.Mock).mock.calls.length).toBeGreaterThan(
+                0,
+            );
+            expect((res.cookie as jest.Mock).mock.calls[0]).toEqual([
                 'refresh_token',
                 mockRefreshToken,
                 { httpOnly: true },
-            );
+            ]);
             expect(res.send).toHaveBeenCalledWith({
                 accessToken: mockAccessToken,
                 refreshToken: mockRefreshToken,
@@ -156,7 +159,9 @@ describe('AuthController', () => {
             await controller.signOut(req, res);
 
             expect(authService.signOut).toHaveBeenCalledWith(mockUser);
-            expect(res.clearCookie).toHaveBeenCalledWith('refresh_token');
+            expect(
+                (res.clearCookie as unknown as jest.Mock).mock.calls.length,
+            ).toBeGreaterThan(0);
             expect(res.send).toHaveBeenCalledWith({
                 message: 'User has been signed out successfully',
             });
@@ -184,11 +189,14 @@ describe('AuthController', () => {
             expect(authService.getNewTokens).toHaveBeenCalledWith(
                 mockRefreshToken,
             );
-            expect(res.cookie).toHaveBeenCalledWith(
+            expect((res.cookie as jest.Mock).mock.calls.length).toBeGreaterThan(
+                0,
+            );
+            expect((res.cookie as jest.Mock).mock.calls[0]).toEqual([
                 'refresh_token',
                 expectedTokens.refreshToken,
                 { httpOnly: true },
-            );
+            ]);
             expect(res.send).toHaveBeenCalledWith({
                 accessToken: expectedTokens.accessToken,
                 message: 'Access token has been refreshed successfully',

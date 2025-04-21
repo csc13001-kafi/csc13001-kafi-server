@@ -7,7 +7,6 @@ import { UpdateMaterialDto } from './dtos/update-material.dto';
 
 describe('MaterialsService', () => {
     let service: MaterialsService;
-    let repository: MaterialsRepository;
 
     // Mock material data
     const mockMaterial = {
@@ -43,7 +42,6 @@ describe('MaterialsService', () => {
         }).compile();
 
         service = module.get<MaterialsService>(MaterialsService);
-        repository = module.get<MaterialsRepository>(MaterialsRepository);
 
         // Reset all mocks
         jest.clearAllMocks();
