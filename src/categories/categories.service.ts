@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CategoriesRepository } from './categories.repository';
-import { ProductsRepository } from 'src/products/products.repository';
+import { ProductsRepository } from '../products/products.repository';
 import type { Multer } from 'multer';
 import { Category } from '../categories/entities/category.model';
 import { UploadService } from '../uploader/upload.service';

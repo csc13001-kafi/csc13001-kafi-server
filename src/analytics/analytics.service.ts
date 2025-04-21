@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Role } from '../auth/enums/roles.enum';
-import { OrdersRepository } from 'src/orders/orders.repository';
-import { UsersRepository } from 'src/users/users.repository';
-import { ProductsRepository } from 'src/products/products.repository';
-import { CategoriesRepository } from 'src/categories/categories.repository';
-import { Product } from 'src/products/entities/product.model';
-import { MaterialsRepository } from 'src/materials/materials.repository';
+import { OrdersRepository } from '../orders/orders.repository';
+import { UsersRepository } from '../users/users.repository';
+import { ProductsRepository } from '../products/products.repository';
+import { CategoriesRepository } from '../categories/categories.repository';
+import { Product } from '../products/entities/product.model';
+import { MaterialsRepository } from '../materials/materials.repository';
 
 @Injectable()
 export class AnalyticsService {
@@ -76,7 +76,7 @@ export class AnalyticsService {
             return await this.usersRepository.countByRole(role);
         } catch (error) {
             this.logger.error(`Error in users count service: ${error.message}`);
-            throw new Error(`Failed to get users count with role ${role}`);
+            throw new Error(`Failed to get users count with role EMPLOYEE`);
         }
     }
 

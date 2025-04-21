@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
-import { OrdersModule } from 'src/orders/orders.module';
-import { UsersModule } from 'src/users/users.module';
-import { ProductsModule } from 'src/products/products.module';
-import { CategoriesModule } from 'src/categories/categories.module';
-import { AccessControlService } from 'src/ac/ac.service';
-import { MaterialsModule } from 'src/materials/materials.module';
+import { OrdersModule } from '../orders/orders.module';
+import { UsersModule } from '../users/users.module';
+import { ProductsModule } from '../products/products.module';
+import { CategoriesModule } from '../categories/categories.module';
+import { AccessControlService } from '../ac/ac.service';
+import { MaterialsModule } from '../materials/materials.module';
 @Module({
     imports: [
         OrdersModule,
