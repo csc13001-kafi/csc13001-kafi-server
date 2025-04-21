@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Role } from '../auth/enums/roles.enum';
-import { OrdersRepository } from '../orders/orders.repository';
-import { UsersRepository } from '../users/users.repository';
-import { ProductsRepository } from '../products/products.repository';
-import { CategoriesRepository } from '../categories/categories.repository';
-import { Product } from '../products/entities/product.model';
-import { MaterialsRepository } from '../materials/materials.repository';
+import { OrdersRepository } from 'src/orders/orders.repository';
+import { UsersRepository } from 'src/users/users.repository';
+import { ProductsRepository } from 'src/products/products.repository';
+import { CategoriesRepository } from 'src/categories/categories.repository';
+import { Product } from 'src/products/entities/product.model';
+import { MaterialsRepository } from 'src/materials/materials.repository';
+import { TimeRangeOption } from './dtos/time-range.dto';
 
 @Injectable()
 export class AnalyticsService {
@@ -19,15 +20,70 @@ export class AnalyticsService {
         private readonly materialsRepository: MaterialsRepository,
     ) {}
 
+    calculateTimeRange(timeRangeOption: TimeRangeOption): {
+        startDate: Date;
+        endDate: Date;
+    } {
+        const now = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
+
+        switch (timeRangeOption) {
+            case TimeRangeOption.TODAY:
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            case TimeRangeOption.THIS_WEEK:
+                const dayOfWeek = now.getDay();
+                // Adjust to Monday as first day of week
+                const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - diffToMonday);
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            case TimeRangeOption.THIS_MONTH:
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            case TimeRangeOption.THREE_MONTHS:
+                startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            case TimeRangeOption.SIX_MONTHS:
+                startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            case TimeRangeOption.THIS_YEAR:
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+            default:
+                throw new Error('Invalid time range option');
+        }
+
+        return { startDate, endDate };
+    }
+
+    async getDashboardStatsByTimeRange(
+        timeRangeOption: TimeRangeOption,
+    ): Promise<any> {
+        const { startDate, endDate } = this.calculateTimeRange(timeRangeOption);
+        return this.getDashboardStats(startDate, endDate);
+    }
+
     async getOrdersCountByTimeRange(
         startDate: Date,
         endDate: Date,
     ): Promise<number> {
         try {
-            return await this.ordersRepository.countByTimeRange(
+            const count = await this.ordersRepository.countByTimeRange(
                 startDate,
                 endDate,
             );
+            return count || 0;
         } catch (error: any) {
             throw new Error(
                 `Failed to get orders count by time range: ${error.message}`,
@@ -40,10 +96,12 @@ export class AnalyticsService {
         endDate: Date,
     ): Promise<number> {
         try {
-            return await this.ordersRepository.getTotalPriceByTimeRange(
-                startDate,
-                endDate,
-            );
+            const totalPrice =
+                await this.ordersRepository.getTotalPriceByTimeRange(
+                    startDate,
+                    endDate,
+                );
+            return totalPrice || 0;
         } catch (error: any) {
             throw new Error(
                 `Failed to get orders total price by time range: ${error.message}`,
@@ -62,7 +120,8 @@ export class AnalyticsService {
 
     async getCategoriesCount(): Promise<number> {
         try {
-            return await this.categoriesRepository.countCategories();
+            const count = await this.categoriesRepository.countCategories();
+            return count || 0;
         } catch (error) {
             this.logger.error(
                 `Error in categories count service: ${error.message}`,
@@ -73,7 +132,8 @@ export class AnalyticsService {
 
     async getUsersCountByRole(role: Role): Promise<number> {
         try {
-            return await this.usersRepository.countByRole(role);
+            const count = await this.usersRepository.countByRole(role);
+            return count || 0;
         } catch (error) {
             this.logger.error(`Error in users count service: ${error.message}`);
             throw new Error(`Failed to get users count with role EMPLOYEE`);
@@ -82,7 +142,8 @@ export class AnalyticsService {
 
     async getProductsCount(): Promise<number> {
         try {
-            return await this.productsRepository.countProducts();
+            const count = await this.productsRepository.countProducts();
+            return count || 0;
         } catch (error: any) {
             throw new Error(`Failed to get products count: ${error.message}`);
         }
@@ -101,6 +162,14 @@ export class AnalyticsService {
                 localEndDate.setFullYear(currentYear);
             }
 
+            // Calculate time difference to determine the previous period
+            const timeDiff = localEndDate.getTime() - localStartDate.getTime();
+
+            // Calculate previous period dates
+            const prevEndDate = new Date(localStartDate.getTime());
+            const prevStartDate = new Date(prevEndDate.getTime() - timeDiff);
+
+            // Get current period data
             const [
                 ordersCount,
                 ordersTotalPrice,
@@ -118,6 +187,33 @@ export class AnalyticsService {
                 this.getUsersCountByRole(Role.GUEST),
             ]);
 
+            // Get previous period data
+            const [prevOrdersCount, prevOrdersTotalPrice] = await Promise.all([
+                this.getOrdersCountByTimeRange(prevStartDate, prevEndDate),
+                this.getOrdersTotalPriceByTimeRange(prevStartDate, prevEndDate),
+            ]);
+
+            // Calculate percentage changes
+            const calculatePercentChange = (
+                current: number,
+                previous: number,
+            ): number => {
+                if (previous === 0) return current > 0 ? 100 : 0;
+                const percentChange = ((current - previous) / previous) * 100;
+                return isNaN(percentChange)
+                    ? 0
+                    : Number(percentChange.toFixed(2));
+            };
+
+            const ordersPercentChange = calculatePercentChange(
+                ordersCount || 0,
+                prevOrdersCount || 0,
+            );
+            const revenuePercentChange = calculatePercentChange(
+                ordersTotalPrice || 0,
+                prevOrdersTotalPrice || 0,
+            );
+
             const timeZoneOffset = new Date().getTimezoneOffset() * 60000;
             const localStartDateFormatted = new Date(
                 localStartDate.getTime() - timeZoneOffset,
@@ -126,17 +222,26 @@ export class AnalyticsService {
                 localEndDate.getTime() - timeZoneOffset,
             );
 
+            // Get human-readable time range name
+            const timeRangeName = this.getTimeRangeName(
+                localStartDate,
+                localEndDate,
+            );
+
             return {
                 Overview: {
-                    ordersCount,
-                    ordersTotalPrice,
+                    ordersCount: ordersCount || 0,
+                    ordersPercentChange: ordersPercentChange || 0,
+                    ordersTotalPrice: ordersTotalPrice || 0,
+                    revenuePercentChange: revenuePercentChange || 0,
                 },
                 Product: {
-                    categoriesCount,
-                    productsCount,
+                    categoriesCount: categoriesCount || 0,
+                    productsCount: productsCount || 0,
                 },
-                Membership: customersCount,
+                Membership: customersCount || 0,
                 timeRange: {
+                    name: timeRangeName,
                     startDate: localStartDateFormatted,
                     endDate: localEndDateFormatted,
                 },
@@ -146,6 +251,77 @@ export class AnalyticsService {
                 `Failed to get dashboard statistics: ${error.message}`,
             );
         }
+    }
+
+    // Helper method to get time range name
+    private getTimeRangeName(startDate: Date, endDate: Date): string {
+        const now = new Date();
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(now);
+        todayEnd.setHours(23, 59, 59, 999);
+
+        // Check for today
+        if (
+            startDate.getTime() === todayStart.getTime() &&
+            endDate.getTime() === todayEnd.getTime()
+        ) {
+            return 'Today';
+        }
+
+        // Check for this week
+        const weekStart = new Date(now);
+        const dayOfWeek = now.getDay();
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        weekStart.setDate(now.getDate() - diffToMonday);
+        weekStart.setHours(0, 0, 0, 0);
+        if (
+            startDate.getTime() === weekStart.getTime() &&
+            endDate.getTime() <= todayEnd.getTime()
+        ) {
+            return 'This Week';
+        }
+
+        // Check for this month
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        monthEnd.setHours(23, 59, 59, 999);
+        if (
+            startDate.getTime() === monthStart.getTime() &&
+            endDate.getTime() === monthEnd.getTime()
+        ) {
+            return 'This Month';
+        }
+
+        // Check for this year
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear(), 11, 31);
+        yearEnd.setHours(23, 59, 59, 999);
+        if (
+            startDate.getTime() === yearStart.getTime() &&
+            endDate.getTime() === yearEnd.getTime()
+        ) {
+            return 'This Year';
+        }
+
+        // Check for 3 months
+        const threeMonthsAgo = new Date(
+            now.getFullYear(),
+            now.getMonth() - 2,
+            1,
+        );
+        if (startDate.getTime() === threeMonthsAgo.getTime()) {
+            return 'Last 3 Months';
+        }
+
+        // Check for 6 months
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        if (startDate.getTime() === sixMonthsAgo.getTime()) {
+            return 'Last 6 Months';
+        }
+
+        // Otherwise return custom range
+        return 'Custom Range';
     }
 
     async getOrdersByMonth(month: number): Promise<any> {
@@ -176,8 +352,8 @@ export class AnalyticsService {
             return {
                 month: month,
                 monthName: startDate.toLocaleString('en-US', { month: 'long' }),
-                ordersCount,
-                ordersTotalPrice,
+                ordersCount: ordersCount || 0,
+                ordersTotalPrice: ordersTotalPrice || 0,
                 timeRange: {
                     startDate: localStartDate,
                     endDate: localEndDate,
@@ -327,15 +503,20 @@ export class AnalyticsService {
             let totalQr = 0;
 
             dayStats.forEach((stat) => {
-                totalCash += stat.cash;
-                totalQr += stat.qr;
+                totalCash += stat.cash || 0;
+                totalQr += stat.qr || 0;
             });
 
             return {
                 month,
                 monthName,
                 year: currentYear,
-                days: dayStats,
+                days: dayStats.map((stat) => ({
+                    ...stat,
+                    cash: stat.cash || 0,
+                    qr: stat.qr || 0,
+                    total: (stat.cash || 0) + (stat.qr || 0),
+                })),
                 summary: {
                     totalCash,
                     totalQr,
@@ -369,12 +550,13 @@ export class AnalyticsService {
             return {
                 materials: materials.map((material) => ({
                     name: material.name,
-                    currentStock: material.currentStock,
-                    originalStock: material.orginalStock,
+                    currentStock: material.currentStock || 0,
+                    originalStock: material.orginalStock || 0,
                     unit: material.unit,
                     percentRemaining:
                         Math.round(
-                            (material.currentStock / material.orginalStock) *
+                            ((material.currentStock || 0) /
+                                (material.orginalStock || 1)) *
                                 100,
                         ) || 0,
                     expiredDate: material.expiredDate,
