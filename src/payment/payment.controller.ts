@@ -7,9 +7,9 @@ import {
     ApiOperation,
     ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ATAuthGuard } from 'src/auth/guards/at-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/roles.enum';
+import { ATAuthGuard } from '../auth/guards/at-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
 @Controller('webhooks')
 export class WebhooksController {
     constructor(private readonly paymentService: PaymentService) {}

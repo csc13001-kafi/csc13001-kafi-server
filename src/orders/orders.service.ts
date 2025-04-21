@@ -12,7 +12,7 @@ import { OrdersRepository } from './orders.repository';
 import { Product } from '../products/entities/product.model';
 import { PayOSService } from '../payment/payos/payos.service';
 import { PaymentMethod } from './enums/payment-method.enum';
-import { PaymentService } from 'src/payment/payment.service';
+import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class OrdersService {
