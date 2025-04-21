@@ -136,7 +136,7 @@ export class AnalyticsService {
             return count || 0;
         } catch (error) {
             this.logger.error(`Error in users count service: ${error.message}`);
-            throw new Error(`Failed to get users count with role ${role}`);
+            throw new Error(`Failed to get users count with role EMPLOYEE`);
         }
     }
 

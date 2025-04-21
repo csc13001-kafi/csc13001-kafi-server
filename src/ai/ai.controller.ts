@@ -14,9 +14,9 @@ import {
     ApiTags,
     ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/roles.enum';
-import { ATAuthGuard } from 'src/auth/guards/at-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
+import { ATAuthGuard } from '../auth/guards/at-auth.guard';
 
 @Controller('ai')
 @ApiTags('AI')
