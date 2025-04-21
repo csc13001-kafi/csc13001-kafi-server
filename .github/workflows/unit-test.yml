@@ -45,11 +45,11 @@ jobs:
                   sudo apt-get install -y jq bc
 
             - name: Display test coverage summary
-              run: cat server/coverage/coverage-summary.json | jq .
+              run: cat coverage/coverage-summary.json | jq .
 
             - name: Check coverage threshold (50% lines)
               run: |
-                  COVERAGE=$(cat server/coverage/coverage-summary.json | jq '.total.lines.pct')
+                  COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
                   echo "Line coverage: $COVERAGE%"
                   if (( $(echo "$COVERAGE < 50" | bc -l) )); then
                     echo "Coverage is below threshold of 50%!"
@@ -57,7 +57,7 @@ jobs:
                   else
                     echo "Coverage meets threshold."
                   fi
-                  mv server/coverage/lcov-report coverage_report
+                  mv coverage/lcov-report coverage_report
 
             - name: Upload Coverage Report as Artifact
               uses: actions/upload-artifact@v4
