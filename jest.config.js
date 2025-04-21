@@ -5,10 +5,17 @@ module.exports = {
     transform: {
         '^.+\\.(t|j)s$': 'ts-jest',
     },
-    collectCoverageFrom: ['**/*.(t|j)s'],
+    collectCoverageFrom: [
+        '**/*.(t|j)s',
+        '!**/migrations/**', // Exclude migrations folder
+        '!**/seeders/**',
+        '!**/node_modules/**',
+        '!**/dist/**',
+    ],
     coverageDirectory: '../coverage',
     testEnvironment: 'node',
     moduleNameMapper: {
         '^src/(.*)$': '<rootDir>/$1',
     },
+    testPathIgnorePatterns: ['/node_modules/', '/migrations/', '/seeders/'],
 };
