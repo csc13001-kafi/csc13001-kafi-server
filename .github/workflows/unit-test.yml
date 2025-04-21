@@ -27,17 +27,17 @@ jobs:
               with:
                   node-version: '22'
 
-            - name: Install dependencies (server)
-              run: cd server && pnpm install
+            - name: Install dependencies
+              run: pnpm install
 
-            - name: Build server
-              run: cd server && timeout 10s pnpm run start:ci || true
+            - name: Start pipeline
+              run: timeout 10s pnpm run start:dev || true
 
             - name: Run unit tests (with Jest)
-              run: cd server && pnpm test
+              run: pnpm test
 
             - name: Run test coverage (with Jest)
-              run: cd server && pnpm test:cov
+              run: pnpm test:cov
 
             - name: Install jq and bc
               run: |
