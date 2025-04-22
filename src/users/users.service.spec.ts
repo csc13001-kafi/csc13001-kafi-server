@@ -306,9 +306,7 @@ describe('UsersService', () => {
 
             const result = await service.sendFeedback(feedbackDto);
 
-            expect(mockConfigService.get).toHaveBeenCalledWith(
-                'MEDIATOR_EMAIL',
-            );
+            expect(mockConfigService.get).toHaveBeenCalledWith('MAIL_FROM');
             expect(mockMailerService.sendMail).toHaveBeenCalledTimes(2);
             expect(result).toEqual({ message: 'Feedback sent successfully' });
         });
