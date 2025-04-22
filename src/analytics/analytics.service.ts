@@ -7,10 +7,13 @@ import { CategoriesRepository } from 'src/categories/categories.repository';
 import { Product } from 'src/products/entities/product.model';
 import { MaterialsRepository } from 'src/materials/materials.repository';
 import { TimeRangeOption } from './dtos/time-range.dto';
+import { ConfigService } from '@nestjs/config';
+import OpenAI from 'openai';
 
 @Injectable()
 export class AnalyticsService {
     private readonly logger = new Logger(AnalyticsService.name);
+    private openai: OpenAI;
 
     constructor(
         private readonly ordersRepository: OrdersRepository,
@@ -18,7 +21,12 @@ export class AnalyticsService {
         private readonly productsRepository: ProductsRepository,
         private readonly categoriesRepository: CategoriesRepository,
         private readonly materialsRepository: MaterialsRepository,
-    ) {}
+        private readonly configService: ConfigService,
+    ) {
+        this.openai = new OpenAI({
+            apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+        });
+    }
 
     calculateTimeRange(timeRangeOption: TimeRangeOption): {
         startDate: Date;
@@ -151,9 +159,8 @@ export class AnalyticsService {
 
     async getDashboardStats(startDate: Date, endDate: Date): Promise<any> {
         try {
-            const localStartDate = new Date(startDate);
-            const localEndDate = new Date(endDate);
-
+            const localStartDate = startDate;
+            const localEndDate = endDate;
             const currentYear = new Date().getFullYear();
             if (localStartDate.getFullYear() !== currentYear) {
                 localStartDate.setFullYear(currentYear);
@@ -266,7 +273,7 @@ export class AnalyticsService {
             startDate.getTime() === todayStart.getTime() &&
             endDate.getTime() === todayEnd.getTime()
         ) {
-            return 'Today';
+            return 'Hôm nay';
         }
 
         // Check for this week
@@ -279,7 +286,7 @@ export class AnalyticsService {
             startDate.getTime() === weekStart.getTime() &&
             endDate.getTime() <= todayEnd.getTime()
         ) {
-            return 'This Week';
+            return 'Tuần này';
         }
 
         // Check for this month
@@ -290,7 +297,7 @@ export class AnalyticsService {
             startDate.getTime() === monthStart.getTime() &&
             endDate.getTime() === monthEnd.getTime()
         ) {
-            return 'This Month';
+            return 'Tháng này';
         }
 
         // Check for this year
@@ -301,7 +308,7 @@ export class AnalyticsService {
             startDate.getTime() === yearStart.getTime() &&
             endDate.getTime() === yearEnd.getTime()
         ) {
-            return 'This Year';
+            return 'Năm này';
         }
 
         // Check for 3 months
@@ -311,17 +318,17 @@ export class AnalyticsService {
             1,
         );
         if (startDate.getTime() === threeMonthsAgo.getTime()) {
-            return 'Last 3 Months';
+            return '3 tháng trước';
         }
 
         // Check for 6 months
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
         if (startDate.getTime() === sixMonthsAgo.getTime()) {
-            return 'Last 6 Months';
+            return '6 tháng trước';
         }
 
         // Otherwise return custom range
-        return 'Custom Range';
+        return 'Khoảng thời gian tùy chọn';
     }
 
     async getOrdersByMonth(month: number): Promise<any> {
@@ -429,13 +436,14 @@ export class AnalyticsService {
             const topProducts: {
                 productId: string;
                 quantity: number;
+                totalQuantity?: number;
                 productName?: string;
+                revenue?: number;
             }[] = await this.ordersRepository.getTopSellingProducts(
                 limit,
                 startDate,
                 endDate,
             );
-
             if (topProducts.length > 0) {
                 const products = await this.productsRepository.findAll();
                 for (const product of topProducts) {
@@ -443,6 +451,8 @@ export class AnalyticsService {
                         (p) => p.id === product.productId,
                     );
                     product.productName = matchingProduct.name;
+                    product.revenue =
+                        product.totalQuantity * matchingProduct.price;
                     delete product.productId;
                 }
                 return {
@@ -567,5 +577,189 @@ export class AnalyticsService {
                 `Failed to get low stock materials: ${error.message}`,
             );
         }
+    }
+
+    async generateBusinessReport(
+        timeRangeOption: TimeRangeOption,
+    ): Promise<string> {
+        try {
+            const { startDate, endDate } =
+                this.calculateTimeRange(timeRangeOption);
+            const timeRangeName = this.getTimeRangeName(startDate, endDate);
+            // Get analytics data for the report
+            const dashboardStats = await this.getDashboardStats(
+                startDate,
+                endDate,
+            );
+            const topProductsData = await this.getTopSellingProducts(5);
+
+            // Get previous period data for comparison
+            const timeDiff = endDate.getTime() - startDate.getTime();
+            const prevEndDate = new Date(startDate.getTime());
+            const prevStartDate = new Date(prevEndDate.getTime() - timeDiff);
+            const prevStats = await this.getDashboardStats(
+                prevStartDate,
+                prevEndDate,
+            );
+
+            // Calculate growth rates
+            const prevOrderCount = prevStats.Overview.ordersCount
+                ? prevStats.Overview.ordersCount
+                : 1;
+            const orderGrowthValue =
+                dashboardStats.Overview.ordersCount > 0
+                    ? ((dashboardStats.Overview.ordersCount - prevOrderCount) /
+                          prevOrderCount) *
+                      100
+                    : 0;
+
+            const orderGrowth = orderGrowthValue.toFixed(2);
+
+            const prevTotalPrice = prevStats.Overview.ordersTotalPrice
+                ? prevStats.Overview.ordersTotalPrice
+                : 1;
+            const revenueGrowthValue =
+                dashboardStats.Overview.ordersTotalPrice > 0 &&
+                prevTotalPrice > 0
+                    ? ((dashboardStats.Overview.ordersTotalPrice -
+                          prevTotalPrice) /
+                          prevTotalPrice) *
+                      100
+                    : 0;
+            const revenueGrowth = revenueGrowthValue.toFixed(2);
+
+            // Calculate gross profit (assuming 70% margin for coffee shop)
+            const grossProfit = dashboardStats.Overview.ordersTotalPrice * 0.7;
+            const grossProfitMargin = (
+                (grossProfit / dashboardStats.Overview.ordersTotalPrice) *
+                100
+            ).toFixed(2);
+
+            // Calculate operating costs (assumed 40% of revenue for coffee shop)
+            const operatingCosts =
+                dashboardStats.Overview.ordersTotalPrice * 0.4;
+
+            const reportData = {
+                timeRange: timeRangeName,
+                ordersCount: dashboardStats.Overview.ordersCount || 0,
+                ordersTotalPrice: dashboardStats.Overview.ordersTotalPrice || 0,
+                orderGrowth: orderGrowth,
+                revenueGrowth: revenueGrowth,
+                grossProfitMargin: grossProfitMargin,
+                operatingCosts: operatingCosts.toFixed(0),
+                monthlyGrowthRate: (revenueGrowthValue / 3).toFixed(2), // Assuming quarterly data
+                topProducts: topProductsData?.topProducts || [],
+                categoriesCount: dashboardStats.Product.categoriesCount || 0,
+                productsCount: dashboardStats.Product.productsCount || 0,
+            };
+
+            // Create OpenAI prompt based on the template
+            console.log(reportData);
+            const prompt = this.createBusinessReportPrompt(reportData);
+
+            // Generate the report with OpenAI
+            const completion = await this.openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'system',
+                        content:
+                            'You are a professional business analyst for Kafi coffee shop. Your job is to analyze data and produce insightful business reports in Vietnamese.',
+                    },
+                    { role: 'user', content: prompt },
+                ],
+                temperature: 0.7,
+            });
+
+            return completion.choices[0].message.content;
+        } catch (error) {
+            this.logger.error(
+                `Error generating business report: ${error.message}`,
+            );
+            throw new Error(
+                `Failed to generate business report: ${error.message}`,
+            );
+        }
+    }
+
+    private createBusinessReportPrompt(data: any): string {
+        const reportData = {
+            timeRange: data.timeRange || 'Không xác định',
+            ordersTotalPrice: data.ordersTotalPrice || 0,
+            revenueGrowth: data.revenueGrowth || '0',
+            ordersCount: data.ordersCount || 0,
+            orderGrowth: data.orderGrowth || '0',
+            grossProfitMargin: data.grossProfitMargin || '0',
+            operatingCosts: data.operatingCosts || '0',
+            monthlyGrowthRate: data.monthlyGrowthRate || '0',
+            topProducts: Array.isArray(data.topProducts)
+                ? data.topProducts
+                : [],
+            customersCount: data.customersCount || 0,
+            employeesCount: data.employeesCount || 0,
+            categoriesCount: data.categoriesCount || 0,
+            productsCount: data.productsCount || 0,
+        };
+
+        // Format the top products list safely
+        let topProductsList = '';
+        if (
+            Array.isArray(reportData.topProducts) &&
+            reportData.topProducts.length > 0
+        ) {
+            topProductsList = reportData.topProducts
+                .map((p, i) => {
+                    const name = p.productName || 'Không tên';
+                    const quantity = p.totalQuantity || 0;
+                    const revenue = p.revenue || 0;
+                    return `${i + 1}. ${name} - ${quantity} sản phẩm - ${revenue} VNĐ`;
+                })
+                .join('\n');
+            console.log(topProductsList);
+        } else {
+            topProductsList = 'Không có dữ liệu sản phẩm';
+        }
+        return `
+Tạo báo cáo đánh giá hiệu suất kinh doanh cho Kafi coffee shop với dữ liệu sau:
+
+Tổng doanh thu: ${reportData.ordersTotalPrice.toLocaleString('vi-VN')} VNĐ
+Tăng trưởng doanh thu: ${reportData.revenueGrowth}%
+Số lượng đơn hàng: ${reportData.ordersCount}
+Tăng trưởng đơn hàng: ${reportData.orderGrowth}%
+Tỷ suất lợi nhuận gộp: ${reportData.grossProfitMargin}%
+Chi phí vận hành: ${parseInt(reportData.operatingCosts)} VNĐ
+Tăng trưởng trung bình theo tháng: ${reportData.monthlyGrowthRate}%
+
+Top sản phẩm bán chạy:
+${topProductsList}
+
+Số lượng khách hàng: ${reportData.customersCount}
+Số lượng nhân viên: ${reportData.employeesCount}
+Số lượng danh mục: ${reportData.categoriesCount}
+Số lượng sản phẩm: ${reportData.productsCount}
+
+Hãy tạo một báo cáo đầy đủ theo mẫu sau (giữ nguyên định dạng và các tiêu đề, thay thế nội dung trong []):
+
+BÁO CÁO ĐÁNH GIÁ HIỆU SUẤT KINH DOANH
+Thời gian: ${reportData.timeRange}
+
+1. Tổng quan doanh thu và lợi nhuận
+Trong ${reportData.timeRange}, tổng doanh thu đạt ${reportData.ordersTotalPrice} VNĐ, với mức tăng/giảm ${reportData.revenueGrowth}% so với kỳ trước. Lợi nhuận ròng đạt ${reportData.grossProfitMargin}%
+Tăng trưởng đơn hàng: ${reportData.orderGrowth}%
+Tỷ suất lợi nhuận gộp: ${reportData.grossProfitMargin}%
+Chi phí vận hành: ${reportData.operatingCosts} VNĐ
+Tăng trưởng trung bình theo tháng: ${reportData.monthlyGrowthRate}%
+2. Hiệu suất sản phẩm/dịch vụ
+Các sản phẩm/dịch vụ có doanh thu cao nhất:
+${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
+Sản phẩm/dịch vụ có mức tăng trưởng mạnh nhất: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
+Sản phẩm/dịch vụ có doanh thu giảm sút: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
+
+3. Đề xuất cải thiện với AI
+Hãy đưa ra lời khuyên dựa trên số liệu bạn biết
+
+Kết luận: Hệ thống ghi nhận [kết quả tốt/xu hướng giảm] trong hiệu suất kinh doanh. Cần có các điều chỉnh về [chiến lược giá, tiếp thị, quản lý khách hàng] để duy trì/tăng trưởng lợi nhuận.
+
+`;
     }
 }

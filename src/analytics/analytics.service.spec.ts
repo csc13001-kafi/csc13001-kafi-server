@@ -7,6 +7,7 @@ import { CategoriesRepository } from '../categories/categories.repository';
 import { MaterialsRepository } from '../materials/materials.repository';
 import { Role } from '../auth/enums/roles.enum';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 // Mock data
 const mockMaterials = [
@@ -107,6 +108,16 @@ const mockMaterialsRepository = {
     findLowestStock: jest.fn(),
 };
 
+// Add mock for ConfigService
+const mockConfigService = {
+    get: jest.fn((key: string) => {
+        if (key === 'OPENAI_API_KEY') {
+            return 'test-api-key';
+        }
+        return undefined;
+    }),
+};
+
 describe('AnalyticsService', () => {
     let service: AnalyticsService;
 
@@ -132,6 +143,7 @@ describe('AnalyticsService', () => {
                     provide: Logger,
                     useValue: { log: jest.fn(), error: jest.fn() },
                 },
+                { provide: ConfigService, useValue: mockConfigService },
             ],
         }).compile();
 

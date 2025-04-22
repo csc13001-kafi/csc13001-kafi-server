@@ -7,6 +7,8 @@ import { ProductsModule } from '../products/products.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { AccessControlService } from '../ac/ac.service';
 import { MaterialsModule } from '../materials/materials.module';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
     imports: [
         OrdersModule,
@@ -14,6 +16,7 @@ import { MaterialsModule } from '../materials/materials.module';
         ProductsModule,
         CategoriesModule,
         MaterialsModule,
+        ConfigModule,
     ],
     controllers: [AnalyticsController],
     providers: [AnalyticsService, AccessControlService],
