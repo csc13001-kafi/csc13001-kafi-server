@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">51.45% </span>
+                <span class="strong">52.04% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>124/241</span>
+                <span class='fraction'>127/244</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">51.85% </span>
+                <span class="strong">53.57% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>14/27</span>
+                <span class='fraction'>15/28</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">51.26% </span>
+                <span class="strong">51.86% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>122/238</span>
+                <span class='fraction'>125/241</span>
             </div>
         
             
@@ -828,7 +828,14 @@
 <a name='L763'></a><a href='#L763'>763</a>
 <a name='L764'></a><a href='#L764'>764</a>
 <a name='L765'></a><a href='#L765'>765</a>
-<a name='L766'></a><a href='#L766'>766</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
+<a name='L766'></a><a href='#L766'>766</a>
+<a name='L767'></a><a href='#L767'>767</a>
+<a name='L768'></a><a href='#L768'>768</a>
+<a name='L769'></a><a href='#L769'>769</a>
+<a name='L770'></a><a href='#L770'>770</a>
+<a name='L771'></a><a href='#L771'>771</a>
+<a name='L772'></a><a href='#L772'>772</a>
+<a name='L773'></a><a href='#L773'>773</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -1387,7 +1394,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1397,9 +1411,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2152,20 +2166,27 @@ export class AnalyticsService {
             const materials =
                 await this.materialsRepository.findLowestStock(limit);
 &nbsp;
+            // Filter materials with less than 30% remaining stock
+            const lowStockMaterials = materials
+                .map((material) =&gt; {
+                    const percentRemaining = Math.round(
+                        ((material.currentStock || <span class="branch-1 cbranch-no" title="branch not covered" >0)</span> /
+                            (material.orginalStock || <span class="branch-1 cbranch-no" title="branch not covered" >1)</span>) *
+                            100,
+                    );
+                    return {
+                        name: material.name,
+                        currentStock: material.currentStock || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
+                        originalStock: material.orginalStock || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
+                        unit: material.unit,
+                        percentRemaining: percentRemaining || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
+                        expiredDate: material.expiredDate,
+                    };
+                })
+                .filter((material) =&gt; material.percentRemaining &lt; 30);
+&nbsp;
             return {
-                materials: materials.map((material) =&gt; ({
-                    name: material.name,
-                    currentStock: material.currentStock || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
-                    originalStock: material.orginalStock || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
-                    unit: material.unit,
-                    percentRemaining:
-                        Math.round(
-                            ((material.currentStock || <span class="branch-1 cbranch-no" title="branch not covered" >0)</span> /
-                                (material.orginalStock || <span class="branch-1 cbranch-no" title="branch not covered" >1)</span>) *
-                                100,
-                        ) || <span class="branch-1 cbranch-no" title="branch not covered" >0,</span>
-                    expiredDate: material.expiredDate,
-                })),
+                materials: lowStockMaterials,
             };
         } catch (error: any) {
             throw new Error(
@@ -2259,7 +2280,7 @@ export class AnalyticsService {
                     {
                         role: 'system',
                         content:
-                            'You are a professional business analyst for Kafi coffee shop. Your job is to analyze data and produce insightful business reports in Vietnamese.',
+                            'You are a professional business analyst for Kafi coffee shop. Your job is to analyze data and produce insightful business reports in Vietnamese. Output format is markdown, add style for special information. If it is a list, separate its item by one line. Do not include any explanations or additional text outside the report.',
                     },
                     { role: 'user', content: prompt },
                 ],
@@ -2365,7 +2386,7 @@ Kết luận: Hệ thống ghi nhận [kết quả tốt/xu hướng giảm] tro
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-04-22T08:13:15.858Z
+                at 2025-04-22T14:10:20.934Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
