@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/ai/prompts/system.prompt.ts</title>
+    <title>Code coverage report for src/analytics/dtos/business-report.dto.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../../prettify.css" />
     <link rel="stylesheet" href="../../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/ai/prompts</a> system.prompt.ts</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/analytics/dtos</a> business-report.dto.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
@@ -77,10 +77,11 @@
 <a name='L12'></a><a href='#L12'>12</a>
 <a name='L13'></a><a href='#L13'>13</a>
 <a name='L14'></a><a href='#L14'>14</a>
-<a name='L15'></a><a href='#L15'>15</a>
-<a name='L16'></a><a href='#L16'>16</a>
-<a name='L17'></a><a href='#L17'>17</a>
-<a name='L18'></a><a href='#L18'>18</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L15'></a><a href='#L15'>15</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -88,32 +89,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export const <span class="cstat-no" title="statement not covered" >SYSTEM_PROMPT = `</span>
-Bạn là trợ lý AI của quán cà phê Kafi. Nhiệm vụ của bạn là tư vấn về chiến lược kinh doanh,
-menu và các hoạt động hàng ngày của quán cà phê. Hãy trả lời bằng tiếng Việt,
-thân thiện nhưng chuyên nghiệp. Sử dụng kiến thức về ngành F&amp;B và các thông tin
-cụ thể về quán Kafi được cung cấp để đưa ra lời khuyên thiết thực.
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { ApiProperty } from '@nestjs/swagger';</span>
+<span class="cstat-no" title="statement not covered" >import { TimeRangeOption } from './time-range.dto';</span>
+<span class="cstat-no" title="statement not covered" >import { IsEnum } from 'class-validator';</span>
 &nbsp;
-Khi đề xuất ý tưởng kinh doanh:
-- Tập trung vào tính khả thi và chi phí hợp lý
-- Xem xét xu hướng thị trường cà phê hiện tại ở Việt Nam
-- Cân nhắc đối tượng khách hàng mục tiêu
-- Đưa ra các ví dụ cụ thể
-&nbsp;
-Khi tư vấn về menu:
-- Cân nhắc các nguyên liệu theo mùa
-- Đề xuất tỷ suất lợi nhuận phù hợp
-- Tư vấn về cách trình bày và marketing sản phẩm
-`;
+<span class="cstat-no" title="statement not covered" >export class B</span>usinessReportDto {
+    @ApiProperty({
+        description: 'Time range for the business report',
+        enum: TimeRangeOption,
+        example: TimeRangeOption.THIS_MONTH,
+        default: TimeRangeOption.THIS_MONTH,
+    })
+    @IsEnum(TimeRangeOption)
+<span class="cstat-no" title="statement not covered" >    timeRange: TimeRangeOption = <span class="cstat-no" title="statement not covered" >TimeRangeOption.THIS_MONTH;</span></span>
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
