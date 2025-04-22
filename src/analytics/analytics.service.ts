@@ -557,20 +557,27 @@ export class AnalyticsService {
             const materials =
                 await this.materialsRepository.findLowestStock(limit);
 
+            // Filter materials with less than 30% remaining stock
+            const lowStockMaterials = materials
+                .map((material) => {
+                    const percentRemaining = Math.round(
+                        ((material.currentStock || 0) /
+                            (material.orginalStock || 1)) *
+                            100,
+                    );
+                    return {
+                        name: material.name,
+                        currentStock: material.currentStock || 0,
+                        originalStock: material.orginalStock || 0,
+                        unit: material.unit,
+                        percentRemaining: percentRemaining || 0,
+                        expiredDate: material.expiredDate,
+                    };
+                })
+                .filter((material) => material.percentRemaining < 30);
+
             return {
-                materials: materials.map((material) => ({
-                    name: material.name,
-                    currentStock: material.currentStock || 0,
-                    originalStock: material.orginalStock || 0,
-                    unit: material.unit,
-                    percentRemaining:
-                        Math.round(
-                            ((material.currentStock || 0) /
-                                (material.orginalStock || 1)) *
-                                100,
-                        ) || 0,
-                    expiredDate: material.expiredDate,
-                })),
+                materials: lowStockMaterials,
             };
         } catch (error: any) {
             throw new Error(
@@ -664,7 +671,7 @@ export class AnalyticsService {
                     {
                         role: 'system',
                         content:
-                            'You are a professional business analyst for Kafi coffee shop. Your job is to analyze data and produce insightful business reports in Vietnamese.',
+                            'You are a professional business analyst for Kafi coffee shop. Your job is to analyze data and produce insightful business reports in Vietnamese. Output format is markdown, add style for special information. If it is a list, separate its item by one line. Do not include any explanations or additional text outside the report.',
                     },
                     { role: 'user', content: prompt },
                 ],
