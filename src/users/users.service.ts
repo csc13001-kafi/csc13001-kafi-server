@@ -147,8 +147,7 @@ export class UsersService {
         try {
             const { name, email, message, phone } = feedbackDto;
 
-            const adminEmail = this.configService.get('MEDIATOR_EMAIL');
-
+            const adminEmail = this.configService.get('MAIL_FROM');
             await this.mailerService.sendMail({
                 to: adminEmail,
                 subject: `[Customer Feedback] From customer ${name}`,
@@ -184,6 +183,7 @@ The Kafi Team
 
             return { message: 'Feedback sent successfully' };
         } catch (error) {
+            console.log(error.message);
             throw new InternalServerErrorException(
                 'Error sending feedback',
                 error.message,
