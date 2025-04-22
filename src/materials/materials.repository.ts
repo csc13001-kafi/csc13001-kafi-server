@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Material } from './entities/material.model';
 import { CreateMaterialDto } from './dtos/create-material.dto';
 import { UpdateMaterialDto } from './dtos/update-material.dto';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class MaterialsRepository {
@@ -28,6 +29,28 @@ export class MaterialsRepository {
             );
         }
         return material;
+    }
+
+    async updateMaterialStock(
+        materialId: string,
+        totalMaterialUsed: number,
+        operation: 'increment' | 'decrement',
+    ): Promise<void> {
+        await this.materialModel.update(
+            {
+                currentStock:
+                    operation === 'increment'
+                        ? Sequelize.literal(
+                              `currentStock + ${totalMaterialUsed}`,
+                          )
+                        : Sequelize.literal(
+                              `currentStock - ${totalMaterialUsed}`,
+                          ),
+            },
+            {
+                where: { id: materialId },
+            },
+        );
     }
 
     async findAll(): Promise<Material[]> {

@@ -6,6 +6,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
+import { Material } from '../materials/entities/material.model';
 
 describe('ProductsRepository', () => {
     let repository: ProductsRepository;
@@ -28,6 +29,13 @@ describe('ProductsRepository', () => {
         findOne: jest.fn(),
         update: jest.fn(),
         destroy: jest.fn(),
+    };
+
+    // Mock Material model
+    const mockMaterialModel = {
+        findAll: jest.fn(),
+        findOne: jest.fn(),
+        findByPk: jest.fn(),
     };
 
     // Mock product data
@@ -78,6 +86,10 @@ describe('ProductsRepository', () => {
                 {
                     provide: getModelToken(ProductMaterial),
                     useValue: mockProductMaterialModel,
+                },
+                {
+                    provide: getModelToken(Material),
+                    useValue: mockMaterialModel,
                 },
             ],
         }).compile();
@@ -206,6 +218,72 @@ describe('ProductsRepository', () => {
             await expect(repository.findAll()).rejects.toThrow(
                 InternalServerErrorException,
             );
+        });
+    });
+
+    describe('findAllMaterialsOfProduct', () => {
+        it('should return all materials for a product', async () => {
+            const productId = '1';
+            const mockMaterial = {
+                id: 'm1',
+                name: 'Coffee Beans',
+                currentStock: 1000,
+                unit: 'g',
+                dataValues: {
+                    id: 'm1',
+                    name: 'Coffee Beans',
+                    currentStock: 1000,
+                    unit: 'g',
+                },
+            };
+
+            const mockProductMaterials = [
+                {
+                    materialId: 'm1',
+                    productId: '1',
+                    quantity: 10,
+                    dataValues: {
+                        materialId: 'm1',
+                        productId: '1',
+                        quantity: 10,
+                        Material: {
+                            dataValues: mockMaterial.dataValues,
+                        },
+                    },
+                },
+            ];
+
+            mockProductMaterialModel.findAll.mockResolvedValue(
+                mockProductMaterials,
+            );
+
+            const result =
+                await repository.findAllMaterialsOfProduct(productId);
+
+            expect(mockProductMaterialModel.findAll).toHaveBeenCalledWith({
+                where: { productId },
+                include: [
+                    {
+                        model: mockMaterialModel,
+                        attributes: ['id', 'name', 'currentStock', 'unit'],
+                    },
+                ],
+            });
+
+            expect(result).toHaveLength(1);
+            expect(result[0].materialId).toBe('m1');
+            expect(result[0].productId).toBe('1');
+            expect(result[0].quantity).toBe(10);
+            expect(result[0].material).toEqual(mockMaterial.dataValues);
+        });
+
+        it('should return empty array if no materials found', async () => {
+            mockProductMaterialModel.findAll.mockResolvedValue([]);
+
+            const result =
+                await repository.findAllMaterialsOfProduct('nonexistent');
+
+            expect(result).toEqual([]);
         });
     });
 

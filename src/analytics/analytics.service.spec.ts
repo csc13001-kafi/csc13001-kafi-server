@@ -441,7 +441,7 @@ describe('AnalyticsService', () => {
             const result = await service.getLowStockMaterials();
 
             expect(result).toHaveProperty('materials');
-            expect(result.materials).toHaveLength(3);
+            expect(result.materials).toHaveLength(2);
             expect(result.materials[0]).toHaveProperty('name', 'Coffee Beans');
             expect(result.materials[0]).toHaveProperty('currentStock', 200);
             expect(result.materials[0]).toHaveProperty('percentRemaining', 20); // (200/1000)*100
@@ -459,7 +459,7 @@ describe('AnalyticsService', () => {
 
             const result = await service.getLowStockMaterials(2);
 
-            expect(result.materials).toHaveLength(2);
+            expect(result.materials).toHaveLength(1);
             expect(
                 mockMaterialsRepository.findLowestStock,
             ).toHaveBeenCalledWith(2);

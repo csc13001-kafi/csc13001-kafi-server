@@ -13,7 +13,7 @@ import { Product } from '../products/entities/product.model';
 import { PayOSService } from '../payment/payos/payos.service';
 import { PaymentMethod } from './enums/payment-method.enum';
 import { PaymentService } from '../payment/payment.service';
-
+import { MaterialsRepository } from '../materials/materials.repository';
 @Injectable()
 export class OrdersService {
     public orderCache: Map<string, any> = new Map();
@@ -21,6 +21,7 @@ export class OrdersService {
     constructor(
         private readonly ordersRepository: OrdersRepository,
         private readonly productsRepository: ProductsRepository,
+        private readonly materialsRepository: MaterialsRepository,
         private readonly usersRepository: UsersRepository,
         private readonly payosService: PayOSService,
         @Inject(forwardRef(() => PaymentService))
@@ -262,6 +263,38 @@ export class OrdersService {
 
             if (!order) {
                 throw new BadRequestException('Order creation failed');
+            }
+
+            const products = orderGeneralDto.products;
+            const quantities = orderGeneralDto.quantities;
+
+            // For each product in the order
+            for (let i = 0; i < products.length; i++) {
+                const productId = products[i].id;
+                const orderedQuantity = quantities[i];
+
+                // Get the materials needed for this product
+                const productMaterials =
+                    await this.productsRepository.findAllMaterialsOfProduct(
+                        productId,
+                    );
+
+                // Decrease stock for each material
+                for (const productMaterial of productMaterials) {
+                    const materialId = productMaterial.materialId;
+                    const materialNeededPerProduct = productMaterial.quantity;
+
+                    // Calculate total material used
+                    const totalMaterialUsed =
+                        materialNeededPerProduct * orderedQuantity;
+
+                    // Update material stock
+                    await this.materialsRepository.updateMaterialStock(
+                        materialId,
+                        totalMaterialUsed,
+                        'decrement',
+                    );
+                }
             }
 
             return {

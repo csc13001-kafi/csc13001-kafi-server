@@ -8,6 +8,9 @@ import { PaymentService } from '../payment/payment.service';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { PaymentMethod } from './enums/payment-method.enum';
 import { InternalServerErrorException } from '@nestjs/common';
+import { MaterialsRepository } from '../materials/materials.repository';
+import { Material } from '../materials/entities/material.model';
+import { getModelToken } from '@nestjs/sequelize';
 
 describe('OrdersService', () => {
     let service: OrdersService;
@@ -40,6 +43,18 @@ describe('OrdersService', () => {
 
     const mockPaymentService = {
         processPayment: jest.fn(),
+    };
+
+    // Add mock for MaterialsRepository
+    const mockMaterialsRepository = {
+        findAll: jest.fn(),
+        findById: jest.fn(),
+        findByName: jest.fn(),
+        findLowestStock: jest.fn(),
+        updateMaterialStock: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
     };
 
     // Mock data
@@ -102,6 +117,10 @@ describe('OrdersService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 OrdersService,
+                {
+                    provide: MaterialsRepository,
+                    useValue: mockMaterialsRepository,
+                },
                 {
                     provide: OrdersRepository,
                     useValue: mockOrdersRepository,

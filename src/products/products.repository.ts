@@ -8,13 +8,14 @@ import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Product } from './entities/product.model';
 import { ProductMaterial } from './entities/product_material.model';
-
+import { Material } from '../materials/entities/material.model';
 @Injectable()
 export class ProductsRepository {
     constructor(
         @InjectModel(Product) private readonly productModel: typeof Product,
         @InjectModel(ProductMaterial)
         private readonly productMaterialModel: typeof ProductMaterial,
+        @InjectModel(Material) private readonly materialModel: typeof Material,
     ) {}
 
     async create(CreateDto: CreateProductDto): Promise<Product> {
@@ -49,6 +50,45 @@ export class ProductsRepository {
         }
 
         return product;
+    }
+
+    async findAllMaterialsOfProduct(productId: string): Promise<
+        {
+            materialId: string;
+            productId: string;
+            quantity: number;
+            material?: any;
+        }[]
+    > {
+        const productMaterials = await this.productMaterialModel.findAll({
+            where: { productId },
+            include: [
+                {
+                    model: this.materialModel,
+                    attributes: ['id', 'name', 'currentStock', 'unit'],
+                },
+            ],
+        });
+
+        if (!productMaterials || productMaterials.length === 0) {
+            return [];
+        }
+
+        // Return the product materials with their associated material details
+        return productMaterials.map((pm) => {
+            const result: any = {
+                materialId: pm.materialId,
+                productId: pm.productId,
+                quantity: pm.quantity,
+            };
+
+            // Add material details if available
+            if (pm.dataValues.Material) {
+                result.material = pm.dataValues.Material.dataValues;
+            }
+
+            return result;
+        });
     }
 
     async findAll(): Promise<Product[]> {

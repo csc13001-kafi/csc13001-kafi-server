@@ -7,9 +7,9 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Product } from './entities/product.model';
 import { ProductMaterial } from './entities/product_material.model';
 import { UploadService } from '../uploader/upload.service';
-
+import { Material } from '../materials/entities/material.model';
 @Module({
-    imports: [SequelizeModule.forFeature([Product, ProductMaterial])],
+    imports: [SequelizeModule.forFeature([Product, ProductMaterial, Material])],
     controllers: [ProductsController],
     providers: [
         ProductsService,

@@ -9,13 +9,14 @@ import { ProductsModule } from '../products/products.module';
 import { UsersModule } from '../users/users.module';
 import { PayosModule } from '../payment/payos/payos.module';
 import { PaymentModule } from '../payment/payment.module';
-
+import { MaterialsModule } from '../materials/materials.module';
 @Module({
     imports: [
         SequelizeModule.forFeature([Order, OrderDetails]),
         ProductsModule,
         UsersModule,
         PayosModule,
+        MaterialsModule,
         forwardRef(() => PaymentModule),
     ],
     controllers: [OrdersController],
