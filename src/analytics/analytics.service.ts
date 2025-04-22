@@ -91,7 +91,6 @@ export class AnalyticsService {
                 startDate,
                 endDate,
             );
-            console.log(startDate, endDate);
             return count || 0;
         } catch (error: any) {
             throw new Error(
@@ -160,9 +159,8 @@ export class AnalyticsService {
 
     async getDashboardStats(startDate: Date, endDate: Date): Promise<any> {
         try {
-            const localStartDate = new Date(startDate);
-            const localEndDate = new Date(endDate);
-
+            const localStartDate = startDate;
+            const localEndDate = endDate;
             const currentYear = new Date().getFullYear();
             if (localStartDate.getFullYear() !== currentYear) {
                 localStartDate.setFullYear(currentYear);
@@ -438,13 +436,14 @@ export class AnalyticsService {
             const topProducts: {
                 productId: string;
                 quantity: number;
+                totalQuantity?: number;
                 productName?: string;
+                revenue?: number;
             }[] = await this.ordersRepository.getTopSellingProducts(
                 limit,
                 startDate,
                 endDate,
             );
-
             if (topProducts.length > 0) {
                 const products = await this.productsRepository.findAll();
                 for (const product of topProducts) {
@@ -452,6 +451,8 @@ export class AnalyticsService {
                         (p) => p.id === product.productId,
                     );
                     product.productName = matchingProduct.name;
+                    product.revenue =
+                        product.totalQuantity * matchingProduct.price;
                     delete product.productId;
                 }
                 return {
@@ -602,48 +603,54 @@ export class AnalyticsService {
             );
 
             // Calculate growth rates
+            const prevOrderCount = prevStats.Overview.ordersCount
+                ? prevStats.Overview.ordersCount
+                : 1;
             const orderGrowthValue =
-                dashboardStats.ordersCount > 0 && prevStats.ordersCount > 0
-                    ? ((dashboardStats.ordersCount - prevStats.ordersCount) /
-                          prevStats.ordersCount) *
+                dashboardStats.Overview.ordersCount > 0
+                    ? ((dashboardStats.Overview.ordersCount - prevOrderCount) /
+                          prevOrderCount) *
                       100
                     : 0;
+
             const orderGrowth = orderGrowthValue.toFixed(2);
 
+            const prevTotalPrice = prevStats.Overview.ordersTotalPrice
+                ? prevStats.Overview.ordersTotalPrice
+                : 1;
             const revenueGrowthValue =
-                dashboardStats.ordersTotalPrice > 0 &&
-                prevStats.ordersTotalPrice > 0
-                    ? ((dashboardStats.ordersTotalPrice -
-                          prevStats.ordersTotalPrice) /
-                          prevStats.ordersTotalPrice) *
+                dashboardStats.Overview.ordersTotalPrice > 0 &&
+                prevTotalPrice > 0
+                    ? ((dashboardStats.Overview.ordersTotalPrice -
+                          prevTotalPrice) /
+                          prevTotalPrice) *
                       100
                     : 0;
             const revenueGrowth = revenueGrowthValue.toFixed(2);
 
             // Calculate gross profit (assuming 70% margin for coffee shop)
-            const grossProfit = dashboardStats.ordersTotalPrice * 0.7;
+            const grossProfit = dashboardStats.Overview.ordersTotalPrice * 0.7;
             const grossProfitMargin = (
-                (grossProfit / dashboardStats.ordersTotalPrice) *
+                (grossProfit / dashboardStats.Overview.ordersTotalPrice) *
                 100
             ).toFixed(2);
 
             // Calculate operating costs (assumed 40% of revenue for coffee shop)
-            const operatingCosts = dashboardStats.ordersTotalPrice * 0.4;
+            const operatingCosts =
+                dashboardStats.Overview.ordersTotalPrice * 0.4;
 
             const reportData = {
                 timeRange: timeRangeName,
-                ordersCount: dashboardStats.ordersCount || 0,
-                ordersTotalPrice: dashboardStats.ordersTotalPrice || 0,
+                ordersCount: dashboardStats.Overview.ordersCount || 0,
+                ordersTotalPrice: dashboardStats.Overview.ordersTotalPrice || 0,
                 orderGrowth: orderGrowth,
                 revenueGrowth: revenueGrowth,
                 grossProfitMargin: grossProfitMargin,
                 operatingCosts: operatingCosts.toFixed(0),
                 monthlyGrowthRate: (revenueGrowthValue / 3).toFixed(2), // Assuming quarterly data
                 topProducts: topProductsData?.topProducts || [],
-                categoriesCount: dashboardStats.categoriesCount || 0,
-                customersCount: dashboardStats.customersCount || 0,
-                employeesCount: dashboardStats.employeesCount || 0,
-                productsCount: dashboardStats.productsCount || 0,
+                categoriesCount: dashboardStats.Product.categoriesCount || 0,
+                productsCount: dashboardStats.Product.productsCount || 0,
             };
 
             // Create OpenAI prompt based on the template
@@ -702,16 +709,16 @@ export class AnalyticsService {
         ) {
             topProductsList = reportData.topProducts
                 .map((p, i) => {
-                    const name = p.name || 'Không tên';
+                    const name = p.productName || 'Không tên';
                     const quantity = p.totalQuantity || 0;
-                    const revenue = p.totalRevenue || 0;
-                    return `${i + 1}. ${name} - ${quantity} sản phẩm - ${revenue.toLocaleString('vi-VN')} VNĐ`;
+                    const revenue = p.revenue || 0;
+                    return `${i + 1}. ${name} - ${quantity} sản phẩm - ${revenue} VNĐ`;
                 })
                 .join('\n');
+            console.log(topProductsList);
         } else {
             topProductsList = 'Không có dữ liệu sản phẩm';
         }
-
         return `
 Tạo báo cáo đánh giá hiệu suất kinh doanh cho Kafi coffee shop với dữ liệu sau:
 
@@ -720,7 +727,7 @@ Tăng trưởng doanh thu: ${reportData.revenueGrowth}%
 Số lượng đơn hàng: ${reportData.ordersCount}
 Tăng trưởng đơn hàng: ${reportData.orderGrowth}%
 Tỷ suất lợi nhuận gộp: ${reportData.grossProfitMargin}%
-Chi phí vận hành: ${parseInt(reportData.operatingCosts).toLocaleString('vi-VN')} VNĐ
+Chi phí vận hành: ${parseInt(reportData.operatingCosts)} VNĐ
 Tăng trưởng trung bình theo tháng: ${reportData.monthlyGrowthRate}%
 
 Top sản phẩm bán chạy:
@@ -737,27 +744,19 @@ BÁO CÁO ĐÁNH GIÁ HIỆU SUẤT KINH DOANH
 Thời gian: ${reportData.timeRange}
 
 1. Tổng quan doanh thu và lợi nhuận
-Trong ${reportData.timeRange}, tổng doanh thu đạt ${reportData.ordersTotalPrice.toLocaleString('vi-VN')} VNĐ, với mức tăng/giảm ${reportData.revenueGrowth}% so với kỳ trước. Lợi nhuận ròng đạt ${reportData.grossProfitMargin}%
+Trong ${reportData.timeRange}, tổng doanh thu đạt ${reportData.ordersTotalPrice} VNĐ, với mức tăng/giảm ${reportData.revenueGrowth}% so với kỳ trước. Lợi nhuận ròng đạt ${reportData.grossProfitMargin}%
+Tăng trưởng đơn hàng: ${reportData.orderGrowth}%
 Tỷ suất lợi nhuận gộp: ${reportData.grossProfitMargin}%
-Chi phí vận hành: ${reportData.operatingCosts.toLocaleString('vi-VN')} VNĐ
+Chi phí vận hành: ${reportData.operatingCosts} VNĐ
 Tăng trưởng trung bình theo tháng: ${reportData.monthlyGrowthRate}%
 2. Hiệu suất sản phẩm/dịch vụ
 Các sản phẩm/dịch vụ có doanh thu cao nhất:
-${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')}
-Sản phẩm/dịch vụ có mức tăng trưởng mạnh nhất: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')}
-Sản phẩm/dịch vụ có doanh thu giảm sút: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')}
+${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
+Sản phẩm/dịch vụ có mức tăng trưởng mạnh nhất: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
+Sản phẩm/dịch vụ có doanh thu giảm sút: ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalQuantity} sản phẩm – ${p.revenue} VNĐ`).join('\n')}
 
-3. Phân tích khách hàng
-Tổng lượt khách hàng: ${reportData.customersCount}
-Khách hàng mới: ${reportData.customersCount} (chiếm ${reportData.customersCount}% tổng khách hàng)
-Tỷ lệ giữ chân khách hàng: ${reportData.customersCount}%
-Tỷ lệ hoàn đơn/trả hàng: ${reportData.customersCount}%
-Xu hướng tiêu dùng: Phần lớn khách hàng quan tâm đến ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')}, với thời gian mua sắm cao điểm vào ${reportData.timeRange}.
-
-4. Đề xuất cải thiện với AI
-Tăng cường chiến lược tiếp thị cho nhóm sản phẩm có tiềm năng như ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')}.
-Điều chỉnh giá/khuyến mãi cho sản phẩm ${reportData.topProducts.map((p, i) => `${i + 1}. ${p.name} – ${p.totalRevenue.toLocaleString('vi-VN')} VNĐ`).join('\n')} để tăng sức hút.
-Đánh giá lại các chiến dịch quảng cáo để tối ưu chi phí và tỷ lệ chuyển đổi.
+3. Đề xuất cải thiện với AI
+Hãy đưa ra lời khuyên dựa trên số liệu bạn biết
 
 Kết luận: Hệ thống ghi nhận [kết quả tốt/xu hướng giảm] trong hiệu suất kinh doanh. Cần có các điều chỉnh về [chiến lược giá, tiếp thị, quản lý khách hàng] để duy trì/tăng trưởng lợi nhuận.
 
