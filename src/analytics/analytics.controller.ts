@@ -277,4 +277,29 @@ export class AnalyticsController {
             );
         }
     }
+
+    @Get('business-report')
+    @ApiOperation({
+        summary: 'Generate a business performance report [MANAGER]',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Business report generated successfully',
+        type: String,
+    })
+    @Roles(Role.MANAGER)
+    async generateBusinessReport(@Query() timeRangeDto: TimeRangeDto) {
+        try {
+            return await this.analyticsService.generateBusinessReport(
+                timeRangeDto.timeRange,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error generating business report: ${error.message}`,
+            );
+            throw new BadRequestException(
+                'Failed to generate business report: ' + error.message,
+            );
+        }
+    }
 }
