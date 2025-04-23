@@ -285,6 +285,7 @@ export class AiService implements OnModuleInit {
     private extractTimeRange(message: string): {
         startDate: Date;
         endDate: Date;
+        textDate: string;
     } {
         const lowercaseMessage = message.toLowerCase();
         const now = new Date();
@@ -293,18 +294,20 @@ export class AiService implements OnModuleInit {
 
         // Default is last 30 days
         startDate.setDate(startDate.getDate() - 30);
-
+        let textDate: string = '';
         // Check for time period mentions
         if (
             lowercaseMessage.includes('hôm nay') ||
             lowercaseMessage.includes('ngày hôm nay')
         ) {
+            textDate = 'hôm nay';
             startDate = new Date(now);
             startDate.setHours(0, 0, 0, 0);
         } else if (
             lowercaseMessage.includes('hôm qua') ||
             lowercaseMessage.includes('ngày hôm qua')
         ) {
+            textDate = 'hôm qua';
             startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 1);
             startDate.setHours(0, 0, 0, 0);
@@ -315,6 +318,7 @@ export class AiService implements OnModuleInit {
             lowercaseMessage.includes('tuần này') ||
             lowercaseMessage.includes('this week')
         ) {
+            textDate = 'tuần này';
             const day = startDate.getDay() || 7; // Get day of week (0 is Sunday, 6 is Saturday)
             startDate = new Date(now);
             startDate.setDate(startDate.getDate() - day + 1); // Set to Monday of current week
@@ -323,6 +327,7 @@ export class AiService implements OnModuleInit {
             lowercaseMessage.includes('tuần trước') ||
             lowercaseMessage.includes('last week')
         ) {
+            textDate = 'tuần trước';
             const day = now.getDay() || 7;
             startDate = new Date(now);
             startDate.setDate(startDate.getDate() - day - 6); // Previous Monday
@@ -334,39 +339,44 @@ export class AiService implements OnModuleInit {
             lowercaseMessage.includes('tháng này') ||
             lowercaseMessage.includes('this month')
         ) {
+            textDate = 'tháng này';
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         } else if (
             lowercaseMessage.includes('tháng trước') ||
             lowercaseMessage.includes('last month')
         ) {
+            textDate = 'tháng trước';
             startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
             endDate = new Date(now.getFullYear(), now.getMonth(), 0);
         } else if (
             lowercaseMessage.includes('quý này') ||
             lowercaseMessage.includes('this quarter')
         ) {
+            textDate = 'quý này';
             const quarter = Math.floor(now.getMonth() / 3);
             startDate = new Date(now.getFullYear(), quarter * 3, 1);
         } else if (
             lowercaseMessage.includes('năm nay') ||
             lowercaseMessage.includes('this year')
         ) {
+            textDate = 'năm nay';
             startDate = new Date(now.getFullYear(), 0, 1);
         } else if (
             lowercaseMessage.includes('năm ngoái') ||
             lowercaseMessage.includes('last year')
         ) {
+            textDate = 'năm ngoái';
             startDate = new Date(now.getFullYear() - 1, 0, 1);
             endDate = new Date(now.getFullYear() - 1, 11, 31);
         }
 
-        return { startDate, endDate };
+        return { startDate, endDate, textDate };
     }
 
     private async getRealTimeAnalyticsData(
         message: string,
     ): Promise<string | null> {
-        const { startDate, endDate } = this.extractTimeRange(message);
+        const { startDate, endDate, textDate } = this.extractTimeRange(message);
         // Get analytics data for the report
         const dashboardStats = await this.analyticsService.getDashboardStats(
             startDate,
@@ -381,9 +391,6 @@ export class AiService implements OnModuleInit {
         const lowercaseMessage = message.toLowerCase();
 
         try {
-            // Extract time range from the message
-            const { startDate, endDate } = this.extractTimeRange(message);
-
             // Format dates for display
             const startDateFormatted = startDate.toLocaleDateString('vi-VN');
             const endDateFormatted = endDate.toLocaleDateString('vi-VN');
@@ -396,13 +403,16 @@ export class AiService implements OnModuleInit {
                 this.containsProductsKeywords(lowercaseMessage);
             const isCategoriesQuery =
                 this.containsCategoriesKeywords(lowercaseMessage);
+            const isRevenueQuery =
+                this.containsRevenueKeywords(lowercaseMessage);
 
             // If not asking about analytics data, return null
             if (
                 !isOrdersQuery &&
                 !isUsersQuery &&
                 !isProductsQuery &&
-                !isCategoriesQuery
+                !isCategoriesQuery &&
+                !isRevenueQuery
             ) {
                 return null;
             }
@@ -416,7 +426,7 @@ export class AiService implements OnModuleInit {
                         startDate,
                         endDate,
                     );
-                analyticsData += `Số lượng đơn hàng ${timeRangeText}: ${ordersCount}\n`;
+                analyticsData += `Số lượng đơn hàng ${textDate} (${timeRangeText}): ${ordersCount}\n`;
             }
 
             // Get users data if requested
@@ -429,20 +439,20 @@ export class AiService implements OnModuleInit {
                     await this.analyticsService.getUsersCountByRole(
                         Role.MANAGER,
                     );
-                analyticsData += `Số lượng nhân viên: ${employeesCount}\n`;
-                analyticsData += `Số lượng quản lý: ${managersCount}\n`;
-                analyticsData += `Tổng số nhân sự: ${employeesCount + managersCount}\n`;
+                analyticsData += `Số lượng nhân viên ${textDate} (${timeRangeText}): ${employeesCount}\n`;
+                analyticsData += `Số lượng quản lý ${textDate} (${timeRangeText}): ${managersCount}\n`;
+                analyticsData += `Tổng số nhân sự ${textDate} (${timeRangeText}): ${employeesCount + managersCount}\n`;
             }
 
             // Get products data if requested
             if (isProductsQuery) {
                 const productsCount =
                     await this.analyticsService.getProductsCount();
-                analyticsData += `Số lượng sản phẩm: ${productsCount}\n`;
+                analyticsData += `Số lượng sản phẩm ${textDate} (${timeRangeText}): ${productsCount}\n`;
                 const products = await this.analyticsService.getProducts();
                 let productList = '';
                 for (const product of products) {
-                    productList += `Sản phẩm: ${product.name}: ${product.price}, `;
+                    productList += `Sản phẩm: ${product.name}: ${product.price}đ, `;
                 }
                 analyticsData += `Danh sách sản phẩm: ${productList}\n`;
             }
@@ -451,9 +461,25 @@ export class AiService implements OnModuleInit {
             if (isCategoriesQuery) {
                 const categoriesCount =
                     await this.analyticsService.getCategoriesCount();
-                analyticsData += `Số lượng danh mục: ${timeRangeText}: ${categoriesCount}\n`;
+                analyticsData += `Số lượng danh mục ${textDate} (${timeRangeText}): ${categoriesCount}\n`;
             }
-            analyticsData += `Tổng doanh thu: ${reportData.ordersTotalPrice}\n`;
+
+            const productRevenue =
+                await this.analyticsService.getProductsRevenue(
+                    startDate,
+                    endDate,
+                );
+
+            analyticsData += `Top 5 sản phẩm có doanh thu cao nhất ${textDate} (${timeRangeText}): `;
+
+            const topProducts = productRevenue.products.slice(0, 5);
+            let topProductsData = '';
+            for (let i = 0; i < topProducts.length; i++) {
+                const product = topProducts[i];
+                topProductsData += `Số ${i + 1}. ${product.name}: ${product.quantity} sản phẩm, ${product.revenue.toLocaleString('vi-VN')}đ (${product.percentage}% tổng doanh thu)\n`;
+            }
+            analyticsData += topProductsData;
+            analyticsData += `Tổng doanh thu ${textDate} (${timeRangeText}): ${reportData.ordersTotalPrice.toLocaleString('vi-VN')}đ\n`;
 
             return analyticsData || null;
         } catch (error) {
@@ -514,6 +540,19 @@ export class AiService implements OnModuleInit {
             message.includes('tổng quan') ||
             message.includes('báo cáo') ||
             message.includes('report')
+        );
+    }
+
+    private containsRevenueKeywords(message: string): boolean {
+        return (
+            message.includes('doanh thu') ||
+            message.includes('revenue') ||
+            message.includes('thu nhập') ||
+            message.includes('income') ||
+            message.includes('lợi nhuận') ||
+            message.includes('profit') ||
+            message.includes('bán được') ||
+            message.includes('kiếm được')
         );
     }
 

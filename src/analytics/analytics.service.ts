@@ -260,8 +260,7 @@ export class AnalyticsService {
         }
     }
 
-    // Helper method to get time range name
-    private getTimeRangeName(startDate: Date, endDate: Date): string {
+    public getTimeRangeName(startDate: Date, endDate: Date): string {
         const now = new Date();
         const todayStart = new Date(now);
         todayStart.setHours(0, 0, 0, 0);
@@ -423,14 +422,6 @@ export class AnalyticsService {
 
                 startDate.setHours(0, 0, 0, 0);
                 endDate.setHours(23, 59, 59, 999);
-
-                const currentYear = new Date().getFullYear();
-                if (startDate.getFullYear() !== currentYear) {
-                    startDate.setFullYear(currentYear);
-                }
-                if (endDate.getFullYear() !== currentYear) {
-                    endDate.setFullYear(currentYear);
-                }
             }
 
             const topProducts: {
@@ -446,7 +437,14 @@ export class AnalyticsService {
             );
             if (topProducts.length > 0) {
                 const products = await this.productsRepository.findAll();
-                for (const product of topProducts) {
+
+                const validTopProducts = topProducts.filter((product) => {
+                    const exists = products.some(
+                        (p) => p.id === product.productId,
+                    );
+                    return exists;
+                });
+                for (const product of validTopProducts) {
                     const matchingProduct = products.find(
                         (p) => p.id === product.productId,
                     );
@@ -463,7 +461,7 @@ export class AnalyticsService {
                                   endDate: endDate.toLocaleDateString(),
                               }
                             : 'All time',
-                    topProducts: topProducts,
+                    topProducts: validTopProducts,
                 };
             }
 
@@ -722,7 +720,6 @@ export class AnalyticsService {
                     return `${i + 1}. ${name} - ${quantity} sản phẩm - ${revenue} VNĐ`;
                 })
                 .join('\n');
-            console.log(topProductsList);
         } else {
             topProductsList = 'Không có dữ liệu sản phẩm';
         }
@@ -768,5 +765,59 @@ Hãy đưa ra lời khuyên dựa trên số liệu bạn biết
 Kết luận: Hệ thống ghi nhận [kết quả tốt/xu hướng giảm] trong hiệu suất kinh doanh. Cần có các điều chỉnh về [chiến lược giá, tiếp thị, quản lý khách hàng] để duy trì/tăng trưởng lợi nhuận.
 
 `;
+    }
+
+    async getProductsRevenue(startDate: Date, endDate: Date): Promise<any> {
+        try {
+            startDate = new Date(startDate);
+            endDate = new Date(endDate);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+            const topProductsData = await this.getTopSellingProducts(
+                10,
+                startDate.toISOString(),
+                endDate.toISOString(),
+            );
+            // Calculate total revenue
+            const totalRevenue = await this.getOrdersTotalPriceByTimeRange(
+                startDate,
+                endDate,
+            );
+
+            // Format the time range for display
+            const timeRangeName = this.getTimeRangeName(startDate, endDate);
+
+            // Ensure we only use valid products (those that still exist in the products table)
+            const validProducts = topProductsData.topProducts || [];
+
+            // Format the result object
+            return {
+                timeRange: timeRangeName,
+                period: {
+                    startDate: startDate.toLocaleDateString('vi-VN'),
+                    endDate: endDate.toLocaleDateString('vi-VN'),
+                },
+                totalRevenue,
+                productsCount: validProducts.length,
+                products:
+                    validProducts.map((product) => ({
+                        name: product.productName,
+                        quantity: product.totalQuantity,
+                        revenue: product.revenue,
+                        percentage:
+                            totalRevenue > 0
+                                ? (
+                                      (product.revenue / totalRevenue) *
+                                      100
+                                  ).toFixed(2)
+                                : 0,
+                    })) || [],
+            };
+        } catch (error) {
+            this.logger.error(
+                `Failed to get products revenue: ${error.message}`,
+            );
+            throw new Error(`Failed to get products revenue: ${error.message}`);
+        }
     }
 }

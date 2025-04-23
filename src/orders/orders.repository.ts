@@ -241,7 +241,9 @@ export class OrdersRepository {
         limit: number = 10,
         startDate?: Date,
         endDate?: Date,
-    ): Promise<{ productId: string; quantity: number }[]> {
+    ): Promise<
+        { productId: string; quantity: number; totalQuantity?: number }[]
+    > {
         try {
             const whereClause: any = {};
             if (startDate && endDate) {
