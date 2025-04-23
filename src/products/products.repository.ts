@@ -69,7 +69,6 @@ export class ProductsRepository {
                 },
             ],
         });
-
         if (!productMaterials || productMaterials.length === 0) {
             return [];
         }
@@ -77,9 +76,9 @@ export class ProductsRepository {
         // Return the product materials with their associated material details
         return productMaterials.map((pm) => {
             const result: any = {
-                materialId: pm.materialId,
-                productId: pm.productId,
-                quantity: pm.quantity,
+                materialId: pm.dataValues.materialId,
+                productId: pm.dataValues.productId,
+                quantity: pm.dataValues.quantity,
             };
 
             // Add material details if available

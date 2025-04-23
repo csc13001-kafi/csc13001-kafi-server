@@ -178,9 +178,46 @@ export class OrdersService {
                             orderDto.clientPhoneNumber,
                         );
                     if (client) {
+                        const currentLoyaltyPoints = client.loyaltyPoints;
+                        const newLoyaltyPoints =
+                            currentLoyaltyPoints +
+                            Math.round(totalPrice / 1000);
                         await this.usersRepository.updateLoyaltyPoints(
                             client.phone,
-                            Math.round(totalPrice / 1000),
+                            newLoyaltyPoints,
+                        );
+                    }
+                }
+
+                const prods = orderGeneralDto.products;
+                const quantities = orderGeneralDto.quantities;
+
+                // For each product in the order
+                for (let i = 0; i < prods.length; i++) {
+                    const productId = prods[i].id;
+                    const orderedQuantity = quantities[i];
+
+                    // Get the materials needed for this product
+                    const productMaterials =
+                        await this.productsRepository.findAllMaterialsOfProduct(
+                            productId,
+                        );
+
+                    // Decrease stock for each material
+                    for (const productMaterial of productMaterials) {
+                        const materialId = productMaterial.materialId;
+                        const materialNeededPerProduct =
+                            productMaterial.quantity;
+
+                        // Calculate total material used
+                        const totalMaterialUsed =
+                            materialNeededPerProduct * orderedQuantity;
+
+                        // Update material stock
+                        await this.materialsRepository.updateMaterialStock(
+                            materialId,
+                            totalMaterialUsed,
+                            'decrement',
                         );
                     }
                 }
@@ -241,34 +278,28 @@ export class OrdersService {
             paymentMethod: PaymentMethod;
         },
     ) {
-        try {
-            if (!orderGeneralDto.clientPhoneNumber) {
-                orderGeneralDto.clientPhoneNumber = '0000000000';
-            } else {
-                const client = await this.usersRepository.findOneByPhoneNumber(
-                    orderGeneralDto.clientPhoneNumber,
-                );
-                if (client) {
-                    await this.usersRepository.updateLoyaltyPoints(
-                        orderGeneralDto.clientPhoneNumber,
-                        Math.round(orderDetails.totalPrice / 1000),
-                    );
-                }
-            }
-
-            const order = await this.ordersRepository.create(
-                orderGeneralDto,
-                orderDetails,
+        if (!orderGeneralDto.clientPhoneNumber) {
+            orderGeneralDto.clientPhoneNumber = '0000000000';
+        } else {
+            const client = await this.usersRepository.findOneByPhoneNumber(
+                orderGeneralDto.clientPhoneNumber,
             );
-
-            if (!order) {
-                throw new BadRequestException('Order creation failed');
+            if (client) {
+                const currentLoyaltyPoints = client.loyaltyPoints;
+                const newLoyaltyPoints =
+                    currentLoyaltyPoints +
+                    Math.round(orderDetails.totalPrice / 1000);
+                await this.usersRepository.updateLoyaltyPoints(
+                    orderGeneralDto.clientPhoneNumber,
+                    newLoyaltyPoints,
+                );
             }
+        }
 
+        try {
             const products = orderGeneralDto.products;
             const quantities = orderGeneralDto.quantities;
 
-            // For each product in the order
             for (let i = 0; i < products.length; i++) {
                 const productId = products[i].id;
                 const orderedQuantity = quantities[i];
@@ -279,7 +310,6 @@ export class OrdersService {
                         productId,
                     );
 
-                // Decrease stock for each material
                 for (const productMaterial of productMaterials) {
                     const materialId = productMaterial.materialId;
                     const materialNeededPerProduct = productMaterial.quantity;
@@ -296,18 +326,27 @@ export class OrdersService {
                     );
                 }
             }
-
-            return {
-                order: {
-                    orderDetails,
-                    orderGeneralDto,
-                },
-                message: 'Order created successfully',
-            };
         } catch (error: any) {
             console.error('Error completing order:', error);
             throw new Error(`Failed to complete order: ${error.message}`);
         }
+
+        const order = await this.ordersRepository.create(
+            orderGeneralDto,
+            orderDetails,
+        );
+
+        if (!order) {
+            throw new BadRequestException('Order creation failed');
+        }
+
+        return {
+            order: {
+                orderDetails,
+                orderGeneralDto,
+            },
+            message: 'Order created successfully',
+        };
     }
 
     async checkPaymentStatus(orderCode: string | number) {

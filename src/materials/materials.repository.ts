@@ -41,10 +41,10 @@ export class MaterialsRepository {
                 currentStock:
                     operation === 'increment'
                         ? Sequelize.literal(
-                              `currentStock + ${totalMaterialUsed}`,
+                              `"currentStock" + ${totalMaterialUsed}`,
                           )
                         : Sequelize.literal(
-                              `currentStock - ${totalMaterialUsed}`,
+                              `"currentStock" - ${totalMaterialUsed}`,
                           ),
             },
             {

@@ -26,6 +26,7 @@ describe('OrdersService', () => {
     const mockProductsRepository = {
         findById: jest.fn(),
         findAll: jest.fn(),
+        findAllMaterialsOfProduct: jest.fn().mockResolvedValue([]),
     };
 
     const mockUsersRepository = {
@@ -218,6 +219,11 @@ describe('OrdersService', () => {
             mockUsersRepository.findOneById.mockResolvedValue(mockUser);
             mockOrdersRepository.create.mockResolvedValue(mockOrder);
 
+            // Mock findAllMaterialsOfProduct to return an empty array for each product
+            mockProductsRepository.findAllMaterialsOfProduct
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([]);
+
             // Set up to mock Promise.all for products
             mockProductsRepository.findById
                 .mockResolvedValueOnce(mockProduct1)
@@ -234,12 +240,23 @@ describe('OrdersService', () => {
                 'user1',
             );
 
+            // Verify findAllMaterialsOfProduct was called for each product
+            expect(
+                mockProductsRepository.findAllMaterialsOfProduct,
+            ).toHaveBeenCalledTimes(2);
+            expect(
+                mockProductsRepository.findAllMaterialsOfProduct,
+            ).toHaveBeenCalledWith('product1');
+            expect(
+                mockProductsRepository.findAllMaterialsOfProduct,
+            ).toHaveBeenCalledWith('product2');
+
             // Verify loyalty points update
             expect(
                 mockUsersRepository.updateLoyaltyPoints,
             ).toHaveBeenCalledWith(
                 '1234567890',
-                50, // totalPrice / 1000
+                1550, // totalPrice / 1000
             );
 
             // Verify order creation
@@ -286,6 +303,11 @@ describe('OrdersService', () => {
                 mockUser,
             );
             mockUsersRepository.findOneById.mockResolvedValue(mockUser);
+
+            // Mock findAllMaterialsOfProduct to return an empty array for each product
+            mockProductsRepository.findAllMaterialsOfProduct
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([]);
 
             // Mock the PayOS response
             mockPayosService.createPaymentLink.mockResolvedValue({
@@ -352,6 +374,11 @@ describe('OrdersService', () => {
                 mockUser,
             );
             mockUsersRepository.findOneById.mockResolvedValue(mockUser);
+
+            // Mock findAllMaterialsOfProduct to return an empty array for each product
+            mockProductsRepository.findAllMaterialsOfProduct
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([]);
 
             // Mock PayOS failure
             mockPayosService.createPaymentLink.mockResolvedValue(null);

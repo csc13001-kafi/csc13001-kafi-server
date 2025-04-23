@@ -1,6 +1,7 @@
-import { Column, Model, Table } from 'sequelize-typescript';
+import { Column, Model, Table, HasMany } from 'sequelize-typescript';
 import { DataTypes } from 'sequelize';
 import dotenv from 'dotenv';
+import { ProductMaterial } from './product_material.model';
 
 dotenv.config();
 
@@ -57,4 +58,7 @@ export class Product extends Model {
         onDelete: 'CASCADE', // If category is deleted, delete related products
     })
     categoryId: string;
+
+    @HasMany(() => ProductMaterial)
+    productMaterials: ProductMaterial[];
 }

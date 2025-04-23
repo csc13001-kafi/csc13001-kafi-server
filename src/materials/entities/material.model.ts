@@ -1,6 +1,7 @@
-import { Column, Model, Table } from 'sequelize-typescript';
+import { Column, Model, Table, HasMany } from 'sequelize-typescript';
 import { DataTypes } from 'sequelize';
 import dotenv from 'dotenv';
+import { ProductMaterial } from '../../products/entities/product_material.model';
 
 dotenv.config();
 
@@ -58,4 +59,7 @@ export class Material extends Model {
         defaultValue: 0,
     })
     price: number;
+
+    @HasMany(() => ProductMaterial)
+    productMaterials: ProductMaterial[];
 }
