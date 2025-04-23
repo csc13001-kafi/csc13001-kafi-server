@@ -87,7 +87,7 @@ export class OrdersRepository {
     async findAll(): Promise<
         {
             id: string;
-            time: Date;
+            time: string;
             employeeName: string;
             paymentMethod: string;
             price: number;
@@ -95,9 +95,12 @@ export class OrdersRepository {
     > {
         const orders = await this.orderModel.findAll();
         const newOrders = orders.map((order: Order) => {
+            const date = new Date(order.dataValues.time);
+            date.setHours(date.getHours() + 7);
+            const result = date.toISOString().replace('Z', '+07:00');
             return {
                 id: order.dataValues.id,
-                time: order.dataValues.time,
+                time: result,
                 employeeName: order.dataValues.employeeName,
                 paymentMethod: order.dataValues.paymentMethod,
                 price: order.dataValues.afterDiscountPrice,

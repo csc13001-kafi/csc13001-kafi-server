@@ -208,7 +208,7 @@ export class OrdersService {
     async getAllOrders(): Promise<
         {
             id: string;
-            time: Date;
+            time: string;
             employeeName: string;
             paymentMethod: string;
             price: number;
