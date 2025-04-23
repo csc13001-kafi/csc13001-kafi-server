@@ -9,8 +9,6 @@ import { CreateOrderDto } from './dtos/create-order.dto';
 import { PaymentMethod } from './enums/payment-method.enum';
 import { InternalServerErrorException } from '@nestjs/common';
 import { MaterialsRepository } from '../materials/materials.repository';
-import { Material } from '../materials/entities/material.model';
-import { getModelToken } from '@nestjs/sequelize';
 
 describe('OrdersService', () => {
     let service: OrdersService;

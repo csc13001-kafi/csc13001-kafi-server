@@ -182,10 +182,12 @@ describe('OrdersRepository', () => {
             const result = await repository.findAll();
 
             expect(mockOrderModel.findAll).toHaveBeenCalled();
+            const date = new Date(mockOrder.dataValues.time);
+            date.setHours(date.getHours() + 7);
             expect(result).toEqual([
                 {
                     id: mockOrder.dataValues.id,
-                    time: mockOrder.dataValues.time,
+                    time: date.toISOString().replace('Z', '+07:00'),
                     employeeName: mockOrder.dataValues.employeeName,
                     paymentMethod: mockOrder.dataValues.paymentMethod,
                     price: mockOrder.dataValues.afterDiscountPrice,
