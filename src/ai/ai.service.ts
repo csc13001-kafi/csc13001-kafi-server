@@ -42,10 +42,10 @@ export class AiService implements OnModuleInit {
         this.knowledgeBase = [
             // General coffee shop information
             'Giờ mở cửa của Kafi là từ 7:00 đến 22:00 hàng ngày, kể cả các ngày lễ.',
-            'Kafi được thành lập vào năm 2025',
+            'Kafi được thành lập vào năm 04/2025',
 
             // Business strategy
-            'Chương trình khách hàng thân thiết của Kafi có 3 cấp độ: Bạc, Vàng và Kim cương.',
+            'Chương trình khách hàng thân thiết của Kafi có 3 cấp độ: Bạc (cần 1000 điểm, giảm 5%), Vàng (cần 2000 điểm, giảm 10%) và Kim cương (cần 5000 điểm, giảm 15%).',
             'Kafi chú trọng vào trải nghiệm trên nền tảng số, với ứng dụng POS và tích điểm cho khách hàng thân thiết',
 
             // Operations
@@ -54,12 +54,38 @@ export class AiService implements OnModuleInit {
         ];
 
         try {
-            const analyticsData = await this.getRealTimeAnalyticsData(
+            const firstAnalyticsData = await this.getRealTimeAnalyticsData(
                 'products, orders, employees, categories, năm nay',
             );
 
-            if (analyticsData) {
-                const newAnalyticsData = analyticsData.split('\n');
+            if (firstAnalyticsData) {
+                const newAnalyticsData = firstAnalyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
+            }
+
+            const secondAnalyticsData = await this.getRealTimeAnalyticsData(
+                'products, orders, tháng này',
+            );
+
+            if (secondAnalyticsData) {
+                const newAnalyticsData = secondAnalyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
+            }
+
+            const thirdAnalyticsData = await this.getRealTimeAnalyticsData(
+                'products, orders, hôm nay',
+            );
+
+            if (thirdAnalyticsData) {
+                const newAnalyticsData = thirdAnalyticsData.split('\n');
                 for (const data of newAnalyticsData) {
                     if (data.length > 0) {
                         this.knowledgeBase.push(`${data}`);
@@ -340,6 +366,18 @@ export class AiService implements OnModuleInit {
     private async getRealTimeAnalyticsData(
         message: string,
     ): Promise<string | null> {
+        const { startDate, endDate } = this.extractTimeRange(message);
+        // Get analytics data for the report
+        const dashboardStats = await this.analyticsService.getDashboardStats(
+            startDate,
+            endDate,
+        );
+        const reportData = {
+            ordersCount: dashboardStats.Overview.ordersCount || 0,
+            ordersTotalPrice: dashboardStats.Overview.ordersTotalPrice || 0,
+            categoriesCount: dashboardStats.Product.categoriesCount || 0,
+            productsCount: dashboardStats.Product.productsCount || 0,
+        };
         const lowercaseMessage = message.toLowerCase();
 
         try {
@@ -371,7 +409,6 @@ export class AiService implements OnModuleInit {
 
             // Get relevant real-time data
             let analyticsData = '';
-
             // Get orders data if requested
             if (isOrdersQuery) {
                 const ordersCount =
@@ -379,7 +416,7 @@ export class AiService implements OnModuleInit {
                         startDate,
                         endDate,
                     );
-                analyticsData += `- Số lượng đơn hàng ${timeRangeText}: ${ordersCount}\n`;
+                analyticsData += `Số lượng đơn hàng ${timeRangeText}: ${ordersCount}\n`;
             }
 
             // Get users data if requested
@@ -392,59 +429,31 @@ export class AiService implements OnModuleInit {
                     await this.analyticsService.getUsersCountByRole(
                         Role.MANAGER,
                     );
-                analyticsData += `- Số lượng nhân viên: ${employeesCount}\n`;
-                analyticsData += `- Số lượng quản lý: ${managersCount}\n`;
-                analyticsData += `- Tổng số nhân sự: ${employeesCount + managersCount}\n`;
+                analyticsData += `Số lượng nhân viên: ${employeesCount}\n`;
+                analyticsData += `Số lượng quản lý: ${managersCount}\n`;
+                analyticsData += `Tổng số nhân sự: ${employeesCount + managersCount}\n`;
             }
 
             // Get products data if requested
             if (isProductsQuery) {
                 const productsCount =
                     await this.analyticsService.getProductsCount();
-                analyticsData += `- Số lượng sản phẩm: ${productsCount}\n`;
+                analyticsData += `Số lượng sản phẩm: ${productsCount}\n`;
                 const products = await this.analyticsService.getProducts();
                 let productList = '';
                 for (const product of products) {
-                    productList += `- Sản phẩm: ${product.name}: ${product.price}, `;
+                    productList += `Sản phẩm: ${product.name}: ${product.price}, `;
                 }
-                analyticsData += `- Danh sách sản phẩm: ${productList}\n`;
+                analyticsData += `Danh sách sản phẩm: ${productList}\n`;
             }
 
             // Get categories data if requested
             if (isCategoriesQuery) {
                 const categoriesCount =
                     await this.analyticsService.getCategoriesCount();
-                analyticsData += `- Số lượng danh mục: ${categoriesCount}\n`;
+                analyticsData += `Số lượng danh mục: ${timeRangeText}: ${categoriesCount}\n`;
             }
-
-            // If all categories are requested or the message contains dashboard/analytics keywords,
-            // get all data at once
-            if (
-                this.containsDashboardKeywords(lowercaseMessage) ||
-                (isOrdersQuery &&
-                    isUsersQuery &&
-                    isProductsQuery &&
-                    isCategoriesQuery)
-            ) {
-                const dashboardStats =
-                    await this.analyticsService.getDashboardStats(
-                        startDate,
-                        endDate,
-                    );
-
-                analyticsData = `- Số lượng đơn hàng ${timeRangeText}: ${dashboardStats.ordersCount}\n`;
-                analyticsData += `- Số lượng danh mục: ${dashboardStats.categoriesCount}\n`;
-                analyticsData += `- Số lượng nhân viên: ${dashboardStats.employeesCount}\n`;
-                analyticsData += `- Số lượng quản lý: ${dashboardStats.managersCount}\n`;
-                analyticsData += `- Tổng số nhân sự: ${dashboardStats.employeesCount + dashboardStats.managersCount}\n`;
-                analyticsData += `- Số lượng sản phẩm: ${dashboardStats.productsCount}\n`;
-                const products = await this.analyticsService.getProducts();
-                let productList = '';
-                for (const product of products) {
-                    productList += `- Sản phẩm: ${product.name}: ${product.price}, `;
-                }
-                analyticsData += `- Danh sách sản phẩm: ${productList}\n`;
-            }
+            analyticsData += `Tổng doanh thu: ${reportData.ordersTotalPrice}\n`;
 
             return analyticsData || null;
         } catch (error) {
