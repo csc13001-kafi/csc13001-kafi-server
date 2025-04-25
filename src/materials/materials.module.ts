@@ -4,7 +4,7 @@ import { Material } from './entities/material.model';
 import { MaterialsController } from './materials.controller';
 import { MaterialsService } from './materials.service';
 import { MaterialsRepository } from './materials.repository';
-import { AccessControlService } from 'src/ac/ac.service';
+import { AccessControlService } from '../ac/ac.service';
 
 @Module({
     imports: [SequelizeModule.forFeature([Material])],

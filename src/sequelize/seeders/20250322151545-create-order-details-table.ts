@@ -10,44 +10,30 @@ export = {
 
         if (orders.length > 0) {
             // Assuming there are orders and using the first order's ID for all entries
-            const firstOrderId = (orders[0] as { id: string }).id;
-            const secondOrderId = (orders[1] as { id: string }).id;
+            const firstOrderId = (orders[2] as { id: string }).id;
+            const secondOrderId = (orders[3] as { id: string }).id;
 
             await queryInterface.bulkInsert('order_details', [
                 {
                     id: uuidv4(),
                     orderId: firstOrderId,
-                    productId: '218e5479-75e5-4d90-9ea7-6c9869569f74',
-                    price: 100,
-                    quantity: 2,
-                },
-                {
-                    id: uuidv4(),
-                    orderId: firstOrderId,
-                    productId: 'd4a7ecea-2887-4808-9e3d-cbb709013ed1',
-                    price: 150,
+                    productId: 'f98755b2-8817-4d0f-ade8-dac0354f9786',
+                    price: 50000,
                     quantity: 1,
                 },
                 {
                     id: uuidv4(),
                     orderId: secondOrderId,
-                    productId: 'aaf3fa0d-8bab-4e2d-b287-9699e4f6f610',
-                    price: 200,
-                    quantity: 3,
-                },
-                {
-                    id: uuidv4(),
-                    orderId: secondOrderId,
-                    productId: '218e5479-75e5-4d90-9ea7-6c9869569f74',
-                    price: 120,
-                    quantity: 1,
-                },
-                {
-                    id: uuidv4(),
-                    orderId: secondOrderId,
-                    productId: 'd4a7ecea-2887-4808-9e3d-cbb709013ed1',
-                    price: 160,
+                    productId: '961f34a2-1849-4ac8-b4c3-e5bd055aac36',
+                    price: 30000,
                     quantity: 2,
+                },
+                {
+                    id: uuidv4(),
+                    orderId: secondOrderId,
+                    productId: '65635505-2133-4431-8dd7-42356a479927',
+                    price: 40000,
+                    quantity: 1,
                 },
             ]);
         } else {

@@ -1,6 +1,6 @@
 import { Column, Model, Table, ForeignKey } from 'sequelize-typescript';
 import { DataTypes } from 'sequelize';
-import { Product } from 'src/products/entities/product.model';
+import { Product } from '../../products/entities/product.model';
 import { Order } from './order.model';
 
 @Table({
@@ -21,12 +21,6 @@ export class OrderDetails extends Model {
     @Column({
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-            model: 'orders',
-            key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
     })
     orderId: string;
 
@@ -34,12 +28,6 @@ export class OrderDetails extends Model {
     @Column({
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-            model: 'products',
-            key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
     })
     productId: string;
 

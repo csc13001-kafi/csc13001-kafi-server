@@ -6,8 +6,10 @@ import { UsersController } from './users.controller';
 import { AccessControlService } from '../ac/ac.service';
 import { UsersRepository } from './users.repository';
 import { UploadService } from '../uploader/upload.service';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
-    imports: [SequelizeModule.forFeature([User])],
+    imports: [SequelizeModule.forFeature([User]), ConfigModule],
     controllers: [UsersController],
     providers: [
         UsersService,

@@ -8,15 +8,23 @@ describe('AppController', () => {
     beforeEach(async () => {
         const app: TestingModule = await Test.createTestingModule({
             controllers: [AppController],
-            providers: [AppService],
+            providers: [
+                {
+                    provide: AppService,
+                    useValue: {
+                        getStatus: jest.fn().mockReturnValue({ status: 'ok' }),
+                    },
+                },
+            ],
         }).compile();
 
         appController = app.get<AppController>(AppController);
     });
 
     describe('root', () => {
-        it('should return "ok"', () => {
-            expect(appController.getStatus()).toBe('ok');
+        it('should return status object', () => {
+            const result = { status: 'ok' };
+            expect(appController.getStatus()).toEqual(result);
         });
     });
 });

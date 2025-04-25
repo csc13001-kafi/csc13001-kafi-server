@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Material } from './entities/material.model';
 import { CreateMaterialDto } from './dtos/create-material.dto';
 import { UpdateMaterialDto } from './dtos/update-material.dto';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class MaterialsRepository {
@@ -28,6 +29,28 @@ export class MaterialsRepository {
             );
         }
         return material;
+    }
+
+    async updateMaterialStock(
+        materialId: string,
+        totalMaterialUsed: number,
+        operation: 'increment' | 'decrement',
+    ): Promise<void> {
+        await this.materialModel.update(
+            {
+                currentStock:
+                    operation === 'increment'
+                        ? Sequelize.literal(
+                              `"currentStock" + ${totalMaterialUsed}`,
+                          )
+                        : Sequelize.literal(
+                              `"currentStock" - ${totalMaterialUsed}`,
+                          ),
+            },
+            {
+                where: { id: materialId },
+            },
+        );
     }
 
     async findAll(): Promise<Material[]> {
@@ -76,6 +99,21 @@ export class MaterialsRepository {
             await material.destroy();
         } catch (error: any) {
             throw new InternalServerErrorException((error as Error).message);
+        }
+    }
+
+    async findLowestStock(limit: number = 3): Promise<Material[]> {
+        try {
+            const materials = await this.materialModel.findAll({
+                order: [['currentStock', 'ASC']],
+                limit: limit,
+            });
+
+            return materials.map((material) => material.dataValues as Material);
+        } catch (error: any) {
+            throw new InternalServerErrorException(
+                `Failed to get materials with lowest stock: ${(error as Error).message}`,
+            );
         }
     }
 }

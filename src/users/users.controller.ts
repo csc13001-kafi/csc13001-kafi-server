@@ -35,6 +35,7 @@ import { CreateEmployeeDto } from './dtos/create-user.dto';
 import { UpdateEmployeeDto, UpdateProfileDto } from './dtos/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Multer } from 'multer';
+import { FeedbackDto } from './dtos/feedback.dto';
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
@@ -92,8 +93,20 @@ export class UsersController {
             birthdate: string;
             workStart: string;
             workEnd: string;
+            loyaltyPoints: number;
         } = await this.usersService.getMyProfile(req.user);
         res.send(foundUser);
+    }
+
+    @ApiOperation({ summary: 'Send customer feedback' })
+    @Post('feedback')
+    @ApiBody({ type: FeedbackDto })
+    @ApiResponse({
+        status: 200,
+        description: 'Send customer feedback successfully',
+    })
+    async sendFeedback(@Body() feedbackDto: FeedbackDto) {
+        return await this.usersService.sendFeedback(feedbackDto);
     }
 
     @ApiOperation({ summary: 'Update profile [GUEST, EMPLOYEE, MANAGER]' })

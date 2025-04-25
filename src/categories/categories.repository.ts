@@ -75,4 +75,9 @@ export class CategoriesRepository {
             throw new InternalServerErrorException((error as Error).message);
         }
     }
+
+    async countCategories(): Promise<number> {
+        const count = await this.categoryModel.count();
+        return count;
+    }
 }

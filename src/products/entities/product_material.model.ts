@@ -1,4 +1,10 @@
-import { Column, Model, Table, ForeignKey } from 'sequelize-typescript';
+import {
+    Column,
+    Model,
+    Table,
+    ForeignKey,
+    BelongsTo,
+} from 'sequelize-typescript';
 import { DataTypes } from 'sequelize';
 import { Product } from './product.model';
 import { Material } from '../../materials/entities/material.model';
@@ -36,4 +42,10 @@ export class ProductMaterial extends Model {
         allowNull: false,
     })
     quantity: number;
+
+    @BelongsTo(() => Product)
+    product: Product;
+
+    @BelongsTo(() => Material)
+    material: Material;
 }

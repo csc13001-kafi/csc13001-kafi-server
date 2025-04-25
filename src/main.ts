@@ -57,12 +57,13 @@ async function bootstrap() {
 
     app.useGlobalPipes(
         new ValidationPipe({
-            whitelist: true,
-            forbidNonWhitelisted: true,
             transform: true,
             transformOptions: {
                 enableImplicitConversion: true,
+                exposeDefaultValues: true,
             },
+            whitelist: true,
+            forbidNonWhitelisted: true,
         }),
     );
 
@@ -106,4 +107,4 @@ async function bootstrap() {
 
     await app.listen(port, () => logger.warn(`> Listening on port ${port}`));
 }
-bootstrap();
+void bootstrap();

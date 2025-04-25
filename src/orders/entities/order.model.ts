@@ -19,11 +19,10 @@ export class Order extends Model {
     declare id: string;
 
     @Column({
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 0,
     })
-    table: number;
+    table: string;
 
     @Column({
         type: DataTypes.STRING,

@@ -13,12 +13,18 @@ import { CategoriesModule } from './categories/categories.module';
 import { MaterialsModule } from './materials/materials.module';
 import { UploadModule } from './uploader/upload.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentModule } from './payment/payment.module';
+import { HttpModule } from '@nestjs/axios';
+import { AiModule } from './ai/ai.module';
+import { RedisModule, RedisModuleOptions } from '@nestjs-modules/ioredis';
+import { AnalyticsModule } from './analytics/analytics.module';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-
+        HttpModule,
         MailerModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({
@@ -35,6 +41,28 @@ import { OrdersModule } from './orders/orders.module';
                 },
             }),
             inject: [ConfigService],
+        }),
+
+        RedisModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService): RedisModuleOptions => ({
+                type: 'single',
+                options: {
+                    host: configService.get<string>('REDIS_HOST'),
+                    port: Number(configService.get<string>('REDIS_PORT')),
+                    username: configService.get<string>('REDIS_USER'),
+                    password: configService.get<string>('REDIS_PASSWORD'),
+                    tls: {
+                        rejectUnauthorized: true,
+                    },
+                    retryStrategy: (times: number) => {
+                        const delay = Math.min(times * 50, 2000);
+                        return delay;
+                    },
+                    maxRetriesPerRequest: 5,
+                },
+            }),
         }),
 
         SequelizeModule.forRootAsync({
@@ -68,6 +96,9 @@ import { OrdersModule } from './orders/orders.module';
         MaterialsModule,
         UploadModule,
         OrdersModule,
+        PaymentModule,
+        AnalyticsModule,
+        AiModule,
     ],
     controllers: [AppController],
     providers: [AppService],

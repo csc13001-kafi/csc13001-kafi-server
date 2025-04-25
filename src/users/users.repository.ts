@@ -48,7 +48,20 @@ export class UsersRepository {
         const user = await this.userModel.findOne<User>({
             where: { phone: phoneNumber },
         });
+        if (!user) {
+            return null;
+        }
         return user.dataValues as User;
+    }
+
+    async updateLoyaltyPoints(
+        phoneNumber: string,
+        points: number,
+    ): Promise<void> {
+        await this.userModel.update(
+            { loyaltyPoints: points },
+            { where: { phone: phoneNumber } },
+        );
     }
 
     async createEmployee(CreateDto: CreateEmployeeDto): Promise<User> {
@@ -316,5 +329,12 @@ export class UsersRepository {
     private generateRandomPassword(): string {
         // Generate a random 6-digit number
         return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    async countByRole(role: Role): Promise<number> {
+        const count = await this.userModel.count({
+            where: { role },
+        });
+        return count;
     }
 }
