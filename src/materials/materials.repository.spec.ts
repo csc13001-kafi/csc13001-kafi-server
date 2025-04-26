@@ -181,7 +181,10 @@ describe('MaterialsRepository', () => {
 
     describe('update', () => {
         it('should update a material', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
             mockMaterial.get.mockReturnValue(mockMaterial.dataValues);
 
             await repository.update(mockMaterial as any, updateDto);
@@ -193,7 +196,10 @@ describe('MaterialsRepository', () => {
         });
 
         it('should throw InternalServerErrorException on error', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
             mockMaterial.get.mockReturnValue(mockMaterial.dataValues);
             mockMaterial.update.mockRejectedValue(new Error('Database error'));
 

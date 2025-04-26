@@ -26,6 +26,7 @@ describe('MaterialsController', () => {
         findById: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        updateStock: jest.fn(),
     };
 
     // Mock access control service
@@ -102,8 +103,15 @@ describe('MaterialsController', () => {
 
     describe('update', () => {
         it('should update a material', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
-            const updatedMaterial = { ...mockMaterial, price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
+            const updatedMaterial = {
+                ...mockMaterial,
+                price: 15,
+                currentStock: 100,
+            };
 
             mockMaterialsService.update.mockResolvedValue(updatedMaterial);
 
@@ -126,6 +134,26 @@ describe('MaterialsController', () => {
 
             expect(mockMaterialsService.delete).toHaveBeenCalledWith('1');
             expect(result).toEqual(response);
+        });
+    });
+
+    describe('updateStock', () => {
+        it('should update material stock and handle product availability', async () => {
+            const updateDto: UpdateMaterialDto = { currentStock: 50 };
+            const updatedMaterial = {
+                ...mockMaterial,
+                currentStock: 50,
+            };
+
+            mockMaterialsService.updateStock.mockResolvedValue(updatedMaterial);
+
+            const result = await controller.updateStock('1', updateDto);
+
+            expect(mockMaterialsService.updateStock).toHaveBeenCalledWith(
+                '1',
+                updateDto,
+            );
+            expect(result).toEqual(updatedMaterial);
         });
     });
 });

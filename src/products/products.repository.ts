@@ -255,4 +255,14 @@ export class ProductsRepository {
         const count = await this.productModel.count();
         return count;
     }
+
+    async updateAvailableStatus(
+        productId: string,
+        status: boolean,
+    ): Promise<void> {
+        await this.productModel.update(
+            { onStock: status },
+            { where: { id: productId } },
+        );
+    }
 }

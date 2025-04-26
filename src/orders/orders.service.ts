@@ -2,8 +2,6 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
-    Inject,
-    forwardRef,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { ProductsRepository } from '../products/products.repository';
@@ -12,7 +10,6 @@ import { OrdersRepository } from './orders.repository';
 import { Product } from '../products/entities/product.model';
 import { PayOSService } from '../payment/payos/payos.service';
 import { PaymentMethod } from './enums/payment-method.enum';
-import { PaymentService } from '../payment/payment.service';
 import { MaterialsRepository } from '../materials/materials.repository';
 @Injectable()
 export class OrdersService {
@@ -24,8 +21,6 @@ export class OrdersService {
         private readonly materialsRepository: MaterialsRepository,
         private readonly usersRepository: UsersRepository,
         private readonly payosService: PayOSService,
-        @Inject(forwardRef(() => PaymentService))
-        private readonly paymentService: PaymentService,
     ) {}
 
     calculateDiscount(
@@ -59,6 +54,102 @@ export class OrdersService {
             afterDiscountPrice: totalPrice,
             discountPercentage: 0,
         };
+    }
+
+    private async checkAndUpdateProductAvailability(
+        products: Product[],
+        quantities?: number[],
+    ) {
+        // If quantities are provided, we need to check each product with its quantity
+        if (quantities) {
+            for (let i = 0; i < products.length; i++) {
+                const productId = products[i].id;
+
+                const productMaterials =
+                    await this.productsRepository.findAllMaterialsOfProduct(
+                        productId,
+                    );
+
+                // For each material required by this product
+                for (const productMaterial of productMaterials) {
+                    const materialId = productMaterial.materialId;
+                    const materialNeededPerProduct = productMaterial.quantity;
+                    const orderedQuantity = quantities[i] || 1;
+
+                    // Calculate total material usage
+                    const totalMaterialUsed =
+                        materialNeededPerProduct * orderedQuantity;
+
+                    // Get current material stock
+                    const currentMaterial =
+                        await this.materialsRepository.findById(materialId);
+
+                    if (!currentMaterial || !currentMaterial.dataValues) {
+                        console.warn(
+                            `Material ${materialId} not found or data missing`,
+                        );
+                        continue;
+                    }
+
+                    const currentStock =
+                        currentMaterial.dataValues.currentStock;
+
+                    // If current stock will be depleted by this order
+                    if (currentStock < totalMaterialUsed) {
+                        await this.productsRepository.updateAvailableStatus(
+                            productId,
+                            false,
+                        );
+                        console.log(
+                            `Updated product ${productId} to out of stock - insufficient ${materialId}`,
+                        );
+                        break; // No need to check other materials for this product
+                    }
+                }
+            }
+            return;
+        }
+
+        // Original implementation for single parameter
+        for (let i = 0; i < products.length; i++) {
+            const productId = products[i].id;
+
+            const productMaterials =
+                await this.productsRepository.findAllMaterialsOfProduct(
+                    productId,
+                );
+
+            // Check if any material is now insufficient for future orders
+            for (const productMaterial of productMaterials) {
+                const materialId = productMaterial.materialId;
+                const requiredQuantity = productMaterial.quantity;
+
+                // Get current material stock
+                const currentMaterial =
+                    await this.materialsRepository.findById(materialId);
+
+                if (!currentMaterial || !currentMaterial.dataValues) {
+                    console.warn(
+                        `Material ${materialId} not found or data missing`,
+                    );
+                    continue;
+                }
+
+                const currentStock = currentMaterial.dataValues.currentStock;
+
+                // If current stock is less than required quantity for one more order, product is out of stock
+                if (currentStock < requiredQuantity) {
+                    await this.productsRepository.updateAvailableStatus(
+                        productId,
+                        false,
+                    );
+                    console.log(
+                        `Updated product ${productId} to out of stock - insufficient ${materialId}`,
+                    );
+                    break; // No need to check other materials for this product
+                }
+            }
+        }
     }
 
     async checkoutOrder(employeeId: string, orderDto: CreateOrderDto) {
@@ -192,28 +283,37 @@ export class OrdersService {
                 const prods = orderGeneralDto.products;
                 const quantities = orderGeneralDto.quantities;
 
-                // For each product in the order
                 for (let i = 0; i < prods.length; i++) {
                     const productId = prods[i].id;
                     const orderedQuantity = quantities[i];
 
-                    // Get the materials needed for this product
                     const productMaterials =
                         await this.productsRepository.findAllMaterialsOfProduct(
                             productId,
                         );
 
-                    // Decrease stock for each material
                     for (const productMaterial of productMaterials) {
                         const materialId = productMaterial.materialId;
                         const materialNeededPerProduct =
                             productMaterial.quantity;
 
-                        // Calculate total material used
                         const totalMaterialUsed =
                             materialNeededPerProduct * orderedQuantity;
-
-                        // Update material stock
+                        const currentMaterialStock =
+                            await this.materialsRepository.findById(materialId);
+                        if (
+                            currentMaterialStock.dataValues.currentStock -
+                                totalMaterialUsed <=
+                            0
+                        ) {
+                            await this.productsRepository.updateAvailableStatus(
+                                productId,
+                                false,
+                            );
+                            throw new BadRequestException(
+                                'Material stock is insufficient',
+                            );
+                        }
                         await this.materialsRepository.updateMaterialStock(
                             materialId,
                             totalMaterialUsed,
@@ -230,6 +330,9 @@ export class OrdersService {
                 if (!order) {
                     throw new BadRequestException('Order creation failed');
                 }
+
+                // Check if any product should be marked as out of stock due to low material inventory
+                await this.checkAndUpdateProductAvailability(prods, quantities);
 
                 return {
                     discountPercentage,
@@ -314,11 +417,23 @@ export class OrdersService {
                     const materialId = productMaterial.materialId;
                     const materialNeededPerProduct = productMaterial.quantity;
 
-                    // Calculate total material used
                     const totalMaterialUsed =
                         materialNeededPerProduct * orderedQuantity;
-
-                    // Update material stock
+                    const currentMaterialStock =
+                        await this.materialsRepository.findById(materialId);
+                    if (
+                        currentMaterialStock.dataValues.currentStock -
+                            totalMaterialUsed <=
+                        0
+                    ) {
+                        await this.productsRepository.updateAvailableStatus(
+                            productId,
+                            false,
+                        );
+                        throw new BadRequestException(
+                            'Material stock is insufficient',
+                        );
+                    }
                     await this.materialsRepository.updateMaterialStock(
                         materialId,
                         totalMaterialUsed,
@@ -339,6 +454,12 @@ export class OrdersService {
         if (!order) {
             throw new BadRequestException('Order creation failed');
         }
+
+        // Check if any product should be marked as out of stock due to low material inventory
+        await this.checkAndUpdateProductAvailability(
+            orderGeneralDto.products,
+            orderGeneralDto.quantities,
+        );
 
         return {
             order: {
