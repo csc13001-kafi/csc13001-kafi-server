@@ -113,9 +113,10 @@ export class MaterialsService {
                 where: { materialId: id },
             });
 
-            const productIds = productMaterials.map(
-                (pm) => pm.dataValues.productId,
-            );
+            // Safely extract product IDs, handling potential nulls
+            const productIds = productMaterials
+                .filter((pm) => pm && pm.dataValues)
+                .map((pm) => pm.dataValues.productId);
 
             if (updateMaterialDto.currentStock <= 0) {
                 for (const productId of productIds) {
@@ -144,7 +145,12 @@ export class MaterialsService {
 
                     // Check if all required materials have sufficient stock
                     const allMaterialsInStock = productMaterialRels.every(
-                        (pm) => pm.material.currentStock >= pm.quantity,
+                        (pm) =>
+                            pm &&
+                            pm.material &&
+                            typeof pm.material.currentStock === 'number' &&
+                            typeof pm.quantity === 'number' &&
+                            pm.material.currentStock >= pm.quantity,
                     );
 
                     // Update product availability

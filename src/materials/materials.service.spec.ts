@@ -281,14 +281,46 @@ describe('MaterialsService', () => {
     describe('updateStock', () => {
         it('should update material stock successfully', async () => {
             const updateDto = { currentStock: 50 };
-            const updatedMaterial = { ...mockMaterial, currentStock: 50 };
+            const updatedMaterial = {
+                ...mockMaterial,
+                currentStock: 50,
+                dataValues: {
+                    ...mockMaterial.dataValues,
+                    currentStock: 50,
+                },
+            };
 
             // Mock repository calls
             mockMaterialsRepository.findById.mockResolvedValue(mockMaterial);
             mockMaterialsRepository.update.mockResolvedValue(updatedMaterial);
-            mockProductMaterialModel.findAll.mockResolvedValue([
-                { dataValues: { productId: 'prod1', materialId: '1' } },
-            ]);
+
+            // Mock product material relationships
+            const mockProductMaterialRel = [
+                {
+                    dataValues: {
+                        productId: 'prod1',
+                        materialId: '1',
+                    },
+                },
+            ];
+            mockProductMaterialModel.findAll.mockResolvedValue(
+                mockProductMaterialRel,
+            );
+
+            // Mock the nested query result
+            const mockNestedResult = [
+                {
+                    material: {
+                        id: '1',
+                        currentStock: 50,
+                    },
+                    quantity: 10,
+                },
+            ];
+            // For the second call to findAll with includes
+            mockProductMaterialModel.findAll
+                .mockResolvedValueOnce(mockProductMaterialRel)
+                .mockResolvedValueOnce(mockNestedResult);
 
             const result = await service.updateStock('1', updateDto);
 

@@ -56,7 +56,61 @@ export class OrdersService {
         };
     }
 
-    private async checkAndUpdateProductAvailability(products: Product[]) {
+    private async checkAndUpdateProductAvailability(
+        products: Product[],
+        quantities?: number[],
+    ) {
+        // If quantities are provided, we need to check each product with its quantity
+        if (quantities) {
+            for (let i = 0; i < products.length; i++) {
+                const productId = products[i].id;
+
+                const productMaterials =
+                    await this.productsRepository.findAllMaterialsOfProduct(
+                        productId,
+                    );
+
+                // For each material required by this product
+                for (const productMaterial of productMaterials) {
+                    const materialId = productMaterial.materialId;
+                    const materialNeededPerProduct = productMaterial.quantity;
+                    const orderedQuantity = quantities[i] || 1;
+
+                    // Calculate total material usage
+                    const totalMaterialUsed =
+                        materialNeededPerProduct * orderedQuantity;
+
+                    // Get current material stock
+                    const currentMaterial =
+                        await this.materialsRepository.findById(materialId);
+
+                    if (!currentMaterial || !currentMaterial.dataValues) {
+                        console.warn(
+                            `Material ${materialId} not found or data missing`,
+                        );
+                        continue;
+                    }
+
+                    const currentStock =
+                        currentMaterial.dataValues.currentStock;
+
+                    // If current stock will be depleted by this order
+                    if (currentStock < totalMaterialUsed) {
+                        await this.productsRepository.updateAvailableStatus(
+                            productId,
+                            false,
+                        );
+                        console.log(
+                            `Updated product ${productId} to out of stock - insufficient ${materialId}`,
+                        );
+                        break; // No need to check other materials for this product
+                    }
+                }
+            }
+            return;
+        }
+
+        // Original implementation for single parameter
         for (let i = 0; i < products.length; i++) {
             const productId = products[i].id;
 
@@ -66,13 +120,21 @@ export class OrdersService {
                 );
 
             // Check if any material is now insufficient for future orders
-            for (const material of productMaterials) {
-                const materialId = material.materialId;
-                const requiredQuantity = material.quantity;
+            for (const productMaterial of productMaterials) {
+                const materialId = productMaterial.materialId;
+                const requiredQuantity = productMaterial.quantity;
 
                 // Get current material stock
                 const currentMaterial =
                     await this.materialsRepository.findById(materialId);
+
+                if (!currentMaterial || !currentMaterial.dataValues) {
+                    console.warn(
+                        `Material ${materialId} not found or data missing`,
+                    );
+                    continue;
+                }
+
                 const currentStock = currentMaterial.dataValues.currentStock;
 
                 // If current stock is less than required quantity for one more order, product is out of stock

@@ -27,6 +27,7 @@ describe('OrdersService', () => {
         findById: jest.fn(),
         findAll: jest.fn(),
         findAllMaterialsOfProduct: jest.fn().mockResolvedValue([]),
+        updateAvailableStatus: jest.fn().mockResolvedValue({}),
     };
 
     const mockUsersRepository = {
@@ -47,7 +48,17 @@ describe('OrdersService', () => {
     // Add mock for MaterialsRepository
     const mockMaterialsRepository = {
         findAll: jest.fn(),
-        findById: jest.fn(),
+        findById: jest.fn().mockResolvedValue({
+            dataValues: {
+                id: 'material1',
+                name: 'Coffee Beans',
+                currentStock: 100,
+                orginalStock: 200,
+                unit: 'g',
+                expiredDate: new Date('2024-12-31'),
+                price: 5000,
+            },
+        }),
         findByName: jest.fn(),
         findLowestStock: jest.fn(),
         updateMaterialStock: jest.fn(),
