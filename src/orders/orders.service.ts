@@ -56,15 +56,10 @@ export class OrdersService {
         };
     }
 
-    private async checkAndUpdateProductAvailability(
-        products: Product[],
-        quantities: number[],
-    ) {
-        // Check each product's material availability after the order
+    private async checkAndUpdateProductAvailability(products: Product[]) {
         for (let i = 0; i < products.length; i++) {
             const productId = products[i].id;
 
-            // Get all materials for this product
             const productMaterials =
                 await this.productsRepository.findAllMaterialsOfProduct(
                     productId,
