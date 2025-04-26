@@ -4,6 +4,9 @@ import { MaterialsRepository } from './materials.repository';
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateMaterialDto } from './dtos/create-material.dto';
 import { UpdateMaterialDto } from './dtos/update-material.dto';
+import { Product } from '../products/entities/product.model';
+import { ProductMaterial } from '../products/entities/product_material.model';
+import { getModelToken } from '@nestjs/sequelize';
 
 describe('MaterialsService', () => {
     let service: MaterialsService;
@@ -30,6 +33,20 @@ describe('MaterialsService', () => {
         findLowestStock: jest.fn(),
     };
 
+    // Mock ProductRepository and ProductMaterialRepository
+    const mockProductModel = {
+        findAll: jest.fn(),
+        findOne: jest.fn(),
+        findByPk: jest.fn(),
+        update: jest.fn(),
+    };
+
+    const mockProductMaterialModel = {
+        findAll: jest.fn(),
+        findOne: jest.fn(),
+        findByPk: jest.fn(),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -37,6 +54,14 @@ describe('MaterialsService', () => {
                 {
                     provide: MaterialsRepository,
                     useValue: mockMaterialsRepository,
+                },
+                {
+                    provide: getModelToken(Product),
+                    useValue: mockProductModel,
+                },
+                {
+                    provide: getModelToken(ProductMaterial),
+                    useValue: mockProductMaterialModel,
                 },
             ],
         }).compile();
@@ -171,7 +196,10 @@ describe('MaterialsService', () => {
 
     describe('update', () => {
         it('should update a material', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
             mockMaterialsRepository.findById.mockResolvedValue(mockMaterial);
             mockMaterialsRepository.update.mockResolvedValue({
                 ...mockMaterial,
@@ -189,7 +217,10 @@ describe('MaterialsService', () => {
         });
 
         it('should throw InternalServerErrorException if material not found', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
             mockMaterialsRepository.findById.mockResolvedValue(null);
 
             await expect(service.update('999', updateDto)).rejects.toThrow(
@@ -199,7 +230,10 @@ describe('MaterialsService', () => {
         });
 
         it('should throw InternalServerErrorException on update error', async () => {
-            const updateDto: UpdateMaterialDto = { price: 15 };
+            const updateDto: UpdateMaterialDto = {
+                price: 15,
+                currentStock: 100,
+            };
             mockMaterialsRepository.findById.mockResolvedValue(mockMaterial);
             mockMaterialsRepository.update.mockRejectedValue(
                 new Error('Database error'),
@@ -239,6 +273,58 @@ describe('MaterialsService', () => {
             );
 
             await expect(service.delete('1')).rejects.toThrow(
+                InternalServerErrorException,
+            );
+        });
+    });
+
+    describe('updateStock', () => {
+        it('should update material stock successfully', async () => {
+            const updateDto = { currentStock: 50 };
+            const updatedMaterial = { ...mockMaterial, currentStock: 50 };
+
+            // Mock repository calls
+            mockMaterialsRepository.findById.mockResolvedValue(mockMaterial);
+            mockMaterialsRepository.update.mockResolvedValue(updatedMaterial);
+            mockProductMaterialModel.findAll.mockResolvedValue([
+                { dataValues: { productId: 'prod1', materialId: '1' } },
+            ]);
+
+            const result = await service.updateStock('1', updateDto);
+
+            expect(mockMaterialsRepository.findById).toHaveBeenCalledWith('1');
+            expect(mockMaterialsRepository.update).toHaveBeenCalledWith(
+                mockMaterial,
+                { currentStock: 50 },
+            );
+            expect(result).toEqual(updatedMaterial);
+        });
+
+        it('should mark products as unavailable when stock is 0', async () => {
+            const updateDto = { currentStock: 0 };
+            const updatedMaterial = { ...mockMaterial, currentStock: 0 };
+
+            mockMaterialsRepository.findById.mockResolvedValue(mockMaterial);
+            mockMaterialsRepository.update.mockResolvedValue(updatedMaterial);
+            mockProductMaterialModel.findAll.mockResolvedValue([
+                { dataValues: { productId: 'prod1', materialId: '1' } },
+            ]);
+
+            await service.updateStock('1', updateDto);
+
+            // Should mark products as unavailable
+            expect(mockProductModel.update).toHaveBeenCalledWith(
+                { onStock: false },
+                { where: { id: 'prod1' } },
+            );
+        });
+
+        it('should throw exception if material is not found', async () => {
+            const updateDto = { currentStock: 50 };
+
+            mockMaterialsRepository.findById.mockResolvedValue(null);
+
+            await expect(service.updateStock('999', updateDto)).rejects.toThrow(
                 InternalServerErrorException,
             );
         });
