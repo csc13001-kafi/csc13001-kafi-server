@@ -56,6 +56,45 @@ export class OrdersService {
         };
     }
 
+    private async checkAndUpdateProductAvailability(
+        products: Product[],
+        quantities: number[],
+    ) {
+        // Check each product's material availability after the order
+        for (let i = 0; i < products.length; i++) {
+            const productId = products[i].id;
+
+            // Get all materials for this product
+            const productMaterials =
+                await this.productsRepository.findAllMaterialsOfProduct(
+                    productId,
+                );
+
+            // Check if any material is now insufficient for future orders
+            for (const material of productMaterials) {
+                const materialId = material.materialId;
+                const requiredQuantity = material.quantity;
+
+                // Get current material stock
+                const currentMaterial =
+                    await this.materialsRepository.findById(materialId);
+                const currentStock = currentMaterial.dataValues.currentStock;
+
+                // If current stock is less than required quantity for one more order, product is out of stock
+                if (currentStock < requiredQuantity) {
+                    await this.productsRepository.updateAvailableStatus(
+                        productId,
+                        false,
+                    );
+                    console.log(
+                        `Updated product ${productId} to out of stock - insufficient ${materialId}`,
+                    );
+                    break; // No need to check other materials for this product
+                }
+            }
+        }
+    }
+
     async checkoutOrder(employeeId: string, orderDto: CreateOrderDto) {
         const numberOfProducts = orderDto.products.length;
         let totalPrice = 0;
@@ -235,6 +274,9 @@ export class OrdersService {
                     throw new BadRequestException('Order creation failed');
                 }
 
+                // Check if any product should be marked as out of stock due to low material inventory
+                await this.checkAndUpdateProductAvailability(prods, quantities);
+
                 return {
                     discountPercentage,
                     discount,
@@ -355,6 +397,12 @@ export class OrdersService {
         if (!order) {
             throw new BadRequestException('Order creation failed');
         }
+
+        // Check if any product should be marked as out of stock due to low material inventory
+        await this.checkAndUpdateProductAvailability(
+            orderGeneralDto.products,
+            orderGeneralDto.quantities,
+        );
 
         return {
             order: {

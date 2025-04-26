@@ -125,30 +125,33 @@ export class MaterialsService {
                     );
                 }
             } else {
+                // Update all products that use this material
                 for (const productId of productIds) {
+                    // Get all materials required for this product
                     const productMaterialRels =
                         await this.productMaterialModel.findAll({
                             where: { productId },
+                            raw: true,
+                            nest: true,
                             include: [
                                 {
                                     model: Material,
                                     attributes: ['id', 'currentStock'],
+                                    required: true,
                                 },
                             ],
                         });
 
+                    // Check if all required materials have sufficient stock
                     const allMaterialsInStock = productMaterialRels.every(
-                        (pm) =>
-                            pm.dataValues.Material?.dataValues.currentStock > 0,
+                        (pm) => pm.material.currentStock >= pm.quantity,
                     );
 
                     // Update product availability
-                    if (allMaterialsInStock) {
-                        await this.productModel.update(
-                            { onStock: true },
-                            { where: { id: productId } },
-                        );
-                    }
+                    await this.productModel.update(
+                        { onStock: allMaterialsInStock },
+                        { where: { id: productId } },
+                    );
                 }
             }
 
