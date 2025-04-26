@@ -7,6 +7,7 @@ import {
     Param,
     Delete,
     UseGuards,
+    Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -16,7 +17,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { MaterialsService } from './materials.service';
 import { CreateMaterialDto } from './dtos/create-material.dto';
 import { UpdateMaterialDto } from './dtos/update-material.dto';
-
 @Controller('materials')
 export class MaterialsController {
     constructor(private readonly materialsService: MaterialsService) {}
@@ -91,5 +91,25 @@ export class MaterialsController {
     @Roles(Role.EMPLOYEE, Role.MANAGER)
     async remove(@Param('id') id: string) {
         return this.materialsService.delete(id);
+    }
+
+    @ApiOperation({
+        summary:
+            'Update material stock and handle product availability [EMPLOYEE, MANAGER]',
+    })
+    @ApiBearerAuth('access-token')
+    @Put(':id/stock')
+    @ApiResponse({
+        status: 200,
+        description:
+            'Material stock updated successfully and product availability adjusted',
+    })
+    @UseGuards(ATAuthGuard, RolesGuard)
+    @Roles(Role.EMPLOYEE, Role.MANAGER)
+    async updateStock(
+        @Param('id') id: string,
+        @Body() updateMaterialDto: UpdateMaterialDto,
+    ) {
+        return this.materialsService.updateStock(id, updateMaterialDto);
     }
 }

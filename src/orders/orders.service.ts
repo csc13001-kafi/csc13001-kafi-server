@@ -2,8 +2,6 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
-    Inject,
-    forwardRef,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { ProductsRepository } from '../products/products.repository';
@@ -12,7 +10,6 @@ import { OrdersRepository } from './orders.repository';
 import { Product } from '../products/entities/product.model';
 import { PayOSService } from '../payment/payos/payos.service';
 import { PaymentMethod } from './enums/payment-method.enum';
-import { PaymentService } from '../payment/payment.service';
 import { MaterialsRepository } from '../materials/materials.repository';
 @Injectable()
 export class OrdersService {
@@ -24,8 +21,6 @@ export class OrdersService {
         private readonly materialsRepository: MaterialsRepository,
         private readonly usersRepository: UsersRepository,
         private readonly payosService: PayOSService,
-        @Inject(forwardRef(() => PaymentService))
-        private readonly paymentService: PaymentService,
     ) {}
 
     calculateDiscount(
@@ -192,28 +187,37 @@ export class OrdersService {
                 const prods = orderGeneralDto.products;
                 const quantities = orderGeneralDto.quantities;
 
-                // For each product in the order
                 for (let i = 0; i < prods.length; i++) {
                     const productId = prods[i].id;
                     const orderedQuantity = quantities[i];
 
-                    // Get the materials needed for this product
                     const productMaterials =
                         await this.productsRepository.findAllMaterialsOfProduct(
                             productId,
                         );
 
-                    // Decrease stock for each material
                     for (const productMaterial of productMaterials) {
                         const materialId = productMaterial.materialId;
                         const materialNeededPerProduct =
                             productMaterial.quantity;
 
-                        // Calculate total material used
                         const totalMaterialUsed =
                             materialNeededPerProduct * orderedQuantity;
-
-                        // Update material stock
+                        const currentMaterialStock =
+                            await this.materialsRepository.findById(materialId);
+                        if (
+                            currentMaterialStock.dataValues.currentStock -
+                                totalMaterialUsed <=
+                            0
+                        ) {
+                            await this.productsRepository.updateAvailableStatus(
+                                productId,
+                                false,
+                            );
+                            throw new BadRequestException(
+                                'Material stock is insufficient',
+                            );
+                        }
                         await this.materialsRepository.updateMaterialStock(
                             materialId,
                             totalMaterialUsed,
@@ -314,11 +318,23 @@ export class OrdersService {
                     const materialId = productMaterial.materialId;
                     const materialNeededPerProduct = productMaterial.quantity;
 
-                    // Calculate total material used
                     const totalMaterialUsed =
                         materialNeededPerProduct * orderedQuantity;
-
-                    // Update material stock
+                    const currentMaterialStock =
+                        await this.materialsRepository.findById(materialId);
+                    if (
+                        currentMaterialStock.dataValues.currentStock -
+                            totalMaterialUsed <=
+                        0
+                    ) {
+                        await this.productsRepository.updateAvailableStatus(
+                            productId,
+                            false,
+                        );
+                        throw new BadRequestException(
+                            'Material stock is insufficient',
+                        );
+                    }
                     await this.materialsRepository.updateMaterialStock(
                         materialId,
                         totalMaterialUsed,
