@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateMaterialDto } from './create-material.dto';
-import { IsNotEmpty, Min } from 'class-validator';
+import { IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { IsNumber } from 'class-validator';
 
 export class UpdateMaterialDto extends PartialType(CreateMaterialDto) {
@@ -10,6 +10,7 @@ export class UpdateMaterialDto extends PartialType(CreateMaterialDto) {
     })
     @IsNotEmpty()
     @IsNumber()
+    @IsOptional()
     @Min(0)
     currentStock: number;
 }
