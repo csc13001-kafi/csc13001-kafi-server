@@ -284,10 +284,6 @@ describe('MaterialsService', () => {
             const updatedMaterial = {
                 ...mockMaterial,
                 currentStock: 50,
-                dataValues: {
-                    ...mockMaterial.dataValues,
-                    currentStock: 50,
-                },
             };
 
             // Mock repository calls

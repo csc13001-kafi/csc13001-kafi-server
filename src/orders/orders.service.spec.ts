@@ -254,7 +254,7 @@ describe('OrdersService', () => {
             // Verify findAllMaterialsOfProduct was called for each product
             expect(
                 mockProductsRepository.findAllMaterialsOfProduct,
-            ).toHaveBeenCalledTimes(2);
+            ).toHaveBeenCalledTimes(4);
             expect(
                 mockProductsRepository.findAllMaterialsOfProduct,
             ).toHaveBeenCalledWith('product1');
