@@ -121,6 +121,9 @@ export class AiService implements OnModuleInit {
         sessionId: string,
     ): Promise<string> {
         try {
+            // Refresh knowledge base with latest data
+            await this.refreshKnowledgeBase();
+
             // Get chat history or create new session if doesn't exist
             const chatHistoryExists = await this.redisClient.exists(
                 `chat:${sessionId}`,
@@ -130,20 +133,18 @@ export class AiService implements OnModuleInit {
                 await this.createNewSession(sessionId);
             }
 
-            // Get relevant knowledge from RAG
+            // Get relevant knowledge from RAG with freshly updated embeddings
             const queryEmbedding = await this.createEmbedding(message);
             const rawRelevantContext = await this.vectorDBAdapter.querySimilar(
                 queryEmbedding,
                 3,
             );
 
-            console.log('rawRelevantContext', rawRelevantContext);
             // Assess if results are truly relevant to the user query
             const relevantContext = this.assessRelevance(
                 message,
                 rawRelevantContext,
             );
-            console.log('relevantContext', relevantContext);
 
             // Add user message to history
             const userMessage = {
@@ -166,7 +167,6 @@ export class AiService implements OnModuleInit {
             // Process the message to identify intent and apply appropriate prompt template
             // const promptTemplate = this.determinePromptTemplate(message);
 
-            //console.log(relevantContext);
             if (
                 chatHistory.length > 0 &&
                 chatHistory[chatHistory.length - 1].role === 'user'
@@ -599,6 +599,76 @@ export class AiService implements OnModuleInit {
         } catch (error) {
             this.logger.error(`Error assessing relevance: ${error.message}`);
             return searchResults; // Return original results if assessment fails
+        }
+    }
+
+    // Add a new method to refresh the knowledge base
+    private async refreshKnowledgeBase(): Promise<void> {
+        // Reset knowledge base to core information
+        this.knowledgeBase = [
+            // General coffee shop information
+            'Giờ mở cửa của Kafi là từ 7:00 đến 22:00 hàng ngày, kể cả các ngày lễ.',
+            'Kafi được thành lập vào năm 04/2025',
+
+            // Business strategy
+            'Chương trình khách hàng thân thiết của Kafi có 3 cấp độ: Bạc (cần 1000 điểm, giảm 5%), Vàng (cần 2000 điểm, giảm 10%) và Kim cương (cần 5000 điểm, giảm 15%).',
+            'Kafi chú trọng vào trải nghiệm trên nền tảng số, với ứng dụng POS và tích điểm cho khách hàng thân thiết',
+
+            // Operations
+            'Kafi tự xây dựng hệ thống POS client và xem menu cùng với số điểm tích lũy của chương trình khách hàng thân thiết',
+            'Kafi sử dụng hệ thống POS tích hợp để quản lý đơn hàng và kho.',
+        ];
+
+        try {
+            // Fetch latest analytics data
+            const firstAnalyticsData = await this.getRealTimeAnalyticsData(
+                'products, orders, employees, categories, năm nay',
+            );
+
+            if (firstAnalyticsData) {
+                const newAnalyticsData = firstAnalyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
+            }
+
+            const secondAnalyticsData = await this.getRealTimeAnalyticsData(
+                'products, orders, tháng này',
+            );
+
+            if (secondAnalyticsData) {
+                const newAnalyticsData = secondAnalyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
+            }
+
+            const thirdAnalyticsData = await this.getRealTimeAnalyticsData(
+                'products, orders, hôm nay',
+            );
+
+            if (thirdAnalyticsData) {
+                const newAnalyticsData = thirdAnalyticsData.split('\n');
+                for (const data of newAnalyticsData) {
+                    if (data.length > 0) {
+                        this.knowledgeBase.push(`${data}`);
+                    }
+                }
+            }
+
+            // Update vector database with fresh knowledge
+            await this.vectorDBAdapter.initialize(this.knowledgeBase);
+            this.logger.log(
+                `Refreshed knowledge base with ${this.knowledgeBase.length} items`,
+            );
+        } catch (error) {
+            this.logger.warn(
+                `Failed to refresh knowledge base with analytics data: ${error.message}`,
+            );
         }
     }
 }
