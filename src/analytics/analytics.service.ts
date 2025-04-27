@@ -383,7 +383,7 @@ export class AnalyticsService {
             const hourlySalesData =
                 await this.ordersRepository.getHourlySalesData(date);
 
-            const formattedDate = date.toLocaleDateString('en-US', {
+            const formattedDate = date.toLocaleDateString('vi-VN', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
